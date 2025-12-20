@@ -25,7 +25,7 @@ export default function SettingsPage() {
 
   const handleAiGenerate = async () => {
     // Simulasi Gemini AI
-    setAiSuggestions(["Minum Air", "Push up 10x", "Baca 5 menit"]);
+    setAiSuggestions(["Minum Air 2L", "Olahraga 30 Menit", "Maksimal Screen Time 2 Jam"]);
   };
 
   return (
@@ -50,7 +50,7 @@ export default function SettingsPage() {
              
              {activeTab === 'task' && (
                <div className="flex gap-2">
-                 {(['Harian', 'Bulanan', 'Sekali Waktu'] as TaskType[]).map(type => (
+                 {(['Harian', 'Mingguan', 'Bulanan', 'Sekali Waktu'] as TaskType[]).map(type => (
                    <button 
                     key={type} 
                     onClick={() => setTaskType(type)}

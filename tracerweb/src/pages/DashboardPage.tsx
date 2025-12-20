@@ -2,14 +2,17 @@ import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Clock, CalendarDays, Zap } from "lucide-react";
+import { Check, Sparkles, Clock, CalendarDays, Zap, Flame } from "lucide-react";
 import { useState } from "react";
 
+
 export default function DashboardPage() {
-  const { habits, tasks, dailyHistory, monthlyHistory, toggleDailyItem, toggleMonthlyItem, toggleOneTimeTask, getTodayDate, getCurrentMonthKey } = useTracker();
+  const { habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask, getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak } = useTracker();
   
   const today = getTodayDate();
-  // 1. Ambil data history mentah hari ini
+
+  const currentWeek = getCurrentWeekKey();
+  
   const rawCompleted = dailyHistory[today] || [];
 
   // 2. Ambil semua ID habit yang MASIH AKTIF (belum dihapus)
@@ -33,7 +36,7 @@ export default function DashboardPage() {
 
   const handleAiMotivation = async () => {
     setMotivation("Loading...");
-    // Simulasi API Call (Ganti dengan fetch Gemini kamu yang asli)
+    // Simulasi Gemini AI
     setTimeout(() => setMotivation("Jangan lupa napas, tugas numpuk itu biasa! 🚀"), 1000);
   };
 
@@ -64,16 +67,61 @@ export default function DashboardPage() {
         <Progress value={progress} className="h-2" />
         {habits.map(h => {
           const isDone = completedHabits.includes(h.id);
+          // Panggil fungsi logic streak disini
+          const streak = getHabitStreak(h.id); 
+
           return (
-            <div key={h.id} onClick={() => toggleDailyItem(h.id)} 
-              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isDone ? 'bg-muted opacity-60' : 'bg-card hover:shadow-md'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-1.5 h-8 rounded-full ${h.color}`}></div>
-                <span className={isDone ? 'line-through' : ''}>{h.name}</span>
+            <div 
+              key={h.id} 
+              onClick={() => toggleDailyItem(h.id)} 
+              className={`relative flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all duration-200 group
+                ${isDone 
+                  ? 'bg-muted/50 border-muted opacity-80' // Style saat selesai
+                  : 'bg-card border-border hover:border-primary hover:shadow-md' // Style saat belum
+                }`}
+            >
+              
+              {/* BAGIAN KIRI: Warna & Teks */}
+              <div className="flex items-center gap-4">
+                {/* Indikator Warna (Garis Tegak) */}
+                <div className={`w-1.5 h-10 rounded-full ${h.color}`}></div>
+                
+                <div className="flex flex-col">
+                  {/* Nama Kebiasaan */}
+                  <span className={`font-semibold text-base ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                    {h.name}
+                  </span>
+
+                  {/* --- POSISI STREAK (DI DALAM KOTAK, BAWAH NAMA) --- */}
+                  {streak > 0 ? (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
+                        <Flame size={12} className="fill-orange-500 animate-pulse" /> 
+                        {streak} Hari Beruntun
+                      </span>
+                    </div>
+                  ) : (
+                    // (Opsional) Teks penyemangat jika streak 0
+                    <span className="text-[10px] text-muted-foreground mt-0.5">
+                      Mulai streak barumu hari ini!
+                    </span>
+                  )}
+                </div>
               </div>
-              {isDone && <Check className="text-green-500" size={20}/>}
+
+              {/* BAGIAN KANAN: Checkmark */}
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
+                ${isDone 
+                  ? 'bg-green-500 border-green-500 scale-110' 
+                  : 'border-muted-foreground/20 group-hover:border-primary/50'
+                }
+              `}>
+                {isDone && <Check size={16} className="text-white font-bold" strokeWidth={4} />}
+              </div>
+
             </div>
-          )
+          );
         })}
       </section>
 
@@ -87,8 +135,11 @@ export default function DashboardPage() {
           let Icon = Clock;
           
           if (t.type === 'Harian') {
-            isDone = (dailyHistory[today] || []).includes(t.id);
+            isDone = (dailyHistory[currentMonth] || []).includes(t.id);
             toggleFn = () => toggleDailyItem(t.id);
+          } else if (t.type === 'Mingguan') { 
+            isDone = (weeklyHistory[currentWeek] || []).includes(t.id);
+            toggleFn = () => toggleWeeklyItem(t.id);
           } else if (t.type === 'Bulanan') {
             isDone = (monthlyHistory[currentMonth] || []).includes(t.id);
             toggleFn = () => toggleMonthlyItem(t.id);

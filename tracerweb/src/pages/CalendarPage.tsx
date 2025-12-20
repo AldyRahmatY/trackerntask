@@ -64,7 +64,7 @@ export default function CalendarPage() {
           <div className="grid grid-cols-7 gap-2">
             {/* Slot Kosong */}
             {blanks.map((_, i) => (
-              <div key={`blank-${i}`} className="h-10 md:h-14 bg-transparent"></div>
+              <div key={`blank-${i}`} className="bg-transparent"></div>
             ))}
 
             {/* Tanggal */}
@@ -93,7 +93,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={day}
-                  className={`flex items-center justify-center h-5 md:h-14 rounded-sm text-sm font-medium transition-all duration-200 cursor-default
+                  className={`flex items-center justify-center h-10 rounded-sm text-sm font-medium transition-all duration-200 cursor-default
                     ${bgColor} 
                     ${isToday ? "ring-2 ring-primary ring-offset-2" : ""}
                   `}

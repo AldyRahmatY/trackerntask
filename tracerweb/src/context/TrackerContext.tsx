@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 // --- TYPES ---
-export type TaskType = 'Harian' | 'Bulanan' | 'Sekali Waktu';
+export type TaskType = 'Harian' | 'Mingguan' | 'Bulanan' | 'Sekali Waktu';
 
 export interface Habit {
   id: string;
@@ -21,15 +21,21 @@ interface TrackerContextType {
   habits: Habit[];
   tasks: Task[];
   dailyHistory: Record<string, string[]>; // 'YYYY-MM-DD': [habitId1, taskId2]
+  weeklyHistory: Record<string, string[]>;
   monthlyHistory: Record<string, string[]>; // 'YYYY-MM': [taskId3]
   addHabit: (name: string) => void;
   addTask: (name: string, type: TaskType) => void;
   deleteItem: (id: string, type: 'habit' | 'task') => void;
+
   toggleDailyItem: (id: string) => void;
+  toggleWeeklyItem: (id: string) => void;
   toggleMonthlyItem: (id: string) => void;
   toggleOneTimeTask: (id: string) => void;
+
   getTodayDate: () => string;
+  getCurrentWeekKey: () => string;
   getCurrentMonthKey: () => string;
+  getHabitStreak: (id: string) => number;
 }
 
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
@@ -45,16 +51,51 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const [dailyHistory, setDailyHistory] = useState<Record<string, string[]>>(() => 
     JSON.parse(localStorage.getItem('dailyHistory') || '{}'));
 
+  const [weeklyHistory, setWeeklyHistory] = useState<Record<string, string[]>>(() => 
+    JSON.parse(localStorage.getItem('weeklyHistory') || '{}'));
+
   const [monthlyHistory, setMonthlyHistory] = useState<Record<string, string[]>>(() => 
     JSON.parse(localStorage.getItem('monthlyHistory') || '{}'));
+
+  const getPreviousDate = (daysAgo: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().split('T')[0];
+  };
+
+  const getHabitStreak = (habitId: string) => {
+    let streak = 0;
+    let daysAgo = 0;
+
+    // Cek apakah hari ini sudah dicentang?
+    const today = getPreviousDate(0);
+    const isDoneToday = (dailyHistory[today] || []).includes(habitId);
+
+    if (isDoneToday) {
+      streak++;
+    }
+    daysAgo = 1;
+    while (true) {
+      const dateStr = getPreviousDate(daysAgo);
+      const isDone = (dailyHistory[dateStr] || []).includes(habitId);
+      if (isDone) {
+        streak++;
+        daysAgo++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  };
 
   // --- EFFECTS (Storage & Cleanup) ---
   useEffect(() => {
     localStorage.setItem('myHabits', JSON.stringify(habits));
     localStorage.setItem('myTasks', JSON.stringify(tasks));
     localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
+    localStorage.setItem('weeklyHistory', JSON.stringify(weeklyHistory));
     localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
-  }, [habits, tasks, dailyHistory, monthlyHistory]);
+  }, [habits, tasks, dailyHistory, weeklyHistory, monthlyHistory]);
 
   // Cleanup Tugas 1x (> 12 jam)
   useEffect(() => {
@@ -73,6 +114,16 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
   // --- ACTIONS ---
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  const getCurrentWeekKey = () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    const weekNo = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    return `${d.getFullYear()}-W${weekNo}`;
+  };
+
   const getCurrentMonthKey = () => new Date().toISOString().slice(0, 7);
 
   const addHabit = (name: string) => {
@@ -110,6 +161,15 @@ const deleteItem = (id: string, type: 'habit' | 'task') => {
     });
   };
 
+  const toggleWeeklyItem = (id: string) => {
+    const weekKey = getCurrentWeekKey();
+    setWeeklyHistory(prev => {
+      const current = prev[weekKey] || [];
+      const updated = current.includes(id) ? current.filter(i => i !== id) : [...current, id];
+      return { ...prev, [weekKey]: updated };
+    });
+  };
+
   const toggleMonthlyItem = (id: string) => {
     const monthKey = getCurrentMonthKey();
     setMonthlyHistory(prev => {
@@ -127,10 +187,10 @@ const deleteItem = (id: string, type: 'habit' | 'task') => {
 
   return (
     <TrackerContext.Provider value={{ 
-      habits, tasks, dailyHistory, monthlyHistory, 
+      habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, 
       addHabit, addTask, deleteItem, 
-      toggleDailyItem, toggleMonthlyItem, toggleOneTimeTask,
-      getTodayDate, getCurrentMonthKey 
+      toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask,
+      getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak,
     }}>
       {children}
     </TrackerContext.Provider>
