@@ -113,15 +113,23 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // --- ACTIONS ---
-  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  // const getTodayDate = () => new Date().toISOString().split('T')[0];
+  const getTodayDate = () => {
+  return new Date().toLocaleDateString('en-CA', {
+    timeZone: 'Asia/Jakarta'
+  });
+};
 
   const getCurrentWeekKey = () => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-    const week1 = new Date(d.getFullYear(), 0, 4);
-    const weekNo = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    return `${d.getFullYear()}-W${weekNo}`;
+    const now = new Date();
+    const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    jakartaTime.setHours(0, 0, 0, 0);
+    
+    jakartaTime.setDate(jakartaTime.getDate() + 3 - (jakartaTime.getDay() + 6) % 7);
+    const week1 = new Date(jakartaTime.getFullYear(), 0, 4);
+
+    const weekNo = 1 + Math.round(((jakartaTime.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    return `${jakartaTime.getFullYear()}-W${weekNo}`;
   };
 
   const getCurrentMonthKey = () => new Date().toISOString().slice(0, 7);
