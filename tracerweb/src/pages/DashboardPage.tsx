@@ -2,8 +2,12 @@ import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Clock, CalendarDays, Zap, Flame } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, 
+  // Sparkles, 
+  Clock, CalendarDays, Zap, Flame } from "lucide-react";
+import { useEffect, 
+  // useState
+        } from "react";
 import confetti from "canvas-confetti";
 
 
@@ -55,16 +59,16 @@ export default function DashboardPage() {
   }, [progress, habits.length]);
 
   const currentMonth = getCurrentMonthKey();
-  const [motivation, setMotivation] = useState("");
+  // const [motivation, setMotivation] = useState("");
 
   // Logic Progress
   const completedHabits = dailyHistory[today] || [];
 
-  const handleAiMotivation = async () => {
-    setMotivation("Loading...");
-    // Simulasi Gemini AI
-    setTimeout(() => setMotivation("Jangan lupa napas, tugas numpuk itu biasa! 🚀"), 1000);
-  };
+  // const handleAiMotivation = async () => {
+  //   setMotivation("Loading...");
+  //   // Simulasi Gemini AI
+  //   setTimeout(() => setMotivation("Jangan lupa napas, tugas numpuk itu biasa! 🚀"), 1000);
+  // };
   
 
   return (
