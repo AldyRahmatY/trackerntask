@@ -23,6 +23,8 @@ interface TrackerContextType {
   dailyHistory: Record<string, string[]>; // 'YYYY-MM-DD': [habitId1, taskId2]
   weeklyHistory: Record<string, string[]>;
   monthlyHistory: Record<string, string[]>; // 'YYYY-MM': [taskId3]
+  resetHour: number;                  // Tambah ini
+  setResetHour: (hour: number) => void;
   addHabit: (name: string) => void;
   addTask: (name: string, type: TaskType) => void;
   deleteItem: (id: string, type: 'habit' | 'task') => void;
@@ -41,6 +43,26 @@ interface TrackerContextType {
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
 
 export const TrackerProvider = ({ children }: { children: ReactNode }) => {
+// 1. Tambah State untuk Reset Hour (Default 0 = Tengah Malam)
+  const [resetHour, setResetHour] = useState<number>(() => 
+    parseInt(localStorage.getItem('resetHour') || '0')
+  );
+
+  // 2. Simpan ke LocalStorage saat berubah
+  useEffect(() => {
+    localStorage.setItem('resetHour', resetHour.toString());
+  }, [resetHour]);
+
+  // 3. FUNGSI INTI: Tanggal yang sudah disesuaikan dengan Reset Hour
+  // Kita buat fungsi helper baru agar bisa dipakai di Daily & Weekly
+  const getAdjustedDate = () => {
+    const now = new Date();
+    // Geser waktu mundur sebanyak resetHour
+    now.setHours(now.getHours() - resetHour);
+    return now;
+  };
+
+
   // --- STATE ---
   const [habits, setHabits] = useState<Habit[]>(() => 
     JSON.parse(localStorage.getItem('myHabits') || '[]'));
@@ -101,10 +123,10 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      const twelveHours = 12 * 60 * 60 * 1000;
+      const fiveHours = 5 * 60 * 60 * 1000;
       setTasks(prev => prev.filter(t => {
         if (t.type === 'Sekali Waktu' && t.completedAt) {
-          return (now - t.completedAt) < twelveHours;
+          return (now - t.completedAt) < fiveHours;
         }
         return true;
       }));
@@ -115,20 +137,25 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   // --- ACTIONS ---
   // const getTodayDate = () => new Date().toISOString().split('T')[0];
   const getTodayDate = () => {
-  return new Date().toLocaleDateString('en-CA', {
-    timeZone: 'Asia/Jakarta'
-  });
-};
+    // Gunakan waktu yang sudah digeser
+    const adjusted = getAdjustedDate();
+    
+    // Format ke YYYY-MM-DD dengan Timezone Jakarta (atau biarkan default local)
+    return adjusted.toLocaleDateString('en-CA', {
+      timeZone: 'Asia/Jakarta' 
+    });
+  };
 
   const getCurrentWeekKey = () => {
-    const now = new Date();
-    const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-    jakartaTime.setHours(0, 0, 0, 0);
+    const d = getAdjustedDate(); // Pakai waktu yang sudah digeser juga!
     
+    // Paksa ke zona waktu Jakarta untuk perhitungan minggu
+    const jakartaTime = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    jakartaTime.setHours(0, 0, 0, 0);
     jakartaTime.setDate(jakartaTime.getDate() + 3 - (jakartaTime.getDay() + 6) % 7);
     const week1 = new Date(jakartaTime.getFullYear(), 0, 4);
-
     const weekNo = 1 + Math.round(((jakartaTime.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    
     return `${jakartaTime.getFullYear()}-W${weekNo}`;
   };
 
@@ -199,6 +226,7 @@ const deleteItem = (id: string, type: 'habit' | 'task') => {
       addHabit, addTask, deleteItem, 
       toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask,
       getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak,
+      resetHour, setResetHour,
     }}>
       {children}
     </TrackerContext.Provider>

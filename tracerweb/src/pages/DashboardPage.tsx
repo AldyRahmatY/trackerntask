@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Clock, CalendarDays, Zap, Flame } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
 
 
 export default function DashboardPage() {
@@ -27,6 +28,31 @@ export default function DashboardPage() {
   const progress = habits.length > 0 
     ? Math.round((validCompletedHabits.length / habits.length) * 100) 
     : 0;
+// --- EFEK CONFETTI ---
+  useEffect(() => {
+    if ((progress === 50 || progress === 100) && habits.length > 0) {
+      // Tembakkan confetti
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Confetti dari kiri dan kanan layar
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+    }
+  }, [progress, habits.length]);
 
   const currentMonth = getCurrentMonthKey();
   const [motivation, setMotivation] = useState("");
@@ -39,6 +65,7 @@ export default function DashboardPage() {
     // Simulasi Gemini AI
     setTimeout(() => setMotivation("Jangan lupa napas, tugas numpuk itu biasa! 🚀"), 1000);
   };
+  
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -51,7 +78,7 @@ export default function DashboardPage() {
       </div>
 
       {/* AI Card */}
-      <Card className="dark:bg-teal-800/60 bg-teal-600/80 text-white border-none">
+      {/* <Card className="dark:bg-teal-800/60 bg-teal-600/80 text-white border-none">
         <CardContent className="p-4 flex flex-col gap-2">
            <div className="flex justify-between items-center">
              <div className="flex items-center gap-2 font-bold"><Sparkles size={16}/> AI Motivator</div>
@@ -59,7 +86,7 @@ export default function DashboardPage() {
            </div>
            <p className="text-sm italic opacity-90">{motivation || "Tekan generate untuk semangat!"}</p>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Kebiasaan */}
       <section className="space-y-3">
@@ -135,7 +162,7 @@ export default function DashboardPage() {
           let Icon = Clock;
           
           if (t.type === 'Harian') {
-            isDone = (dailyHistory[currentMonth] || []).includes(t.id);
+            isDone = (dailyHistory[today] || []).includes(t.id);
             toggleFn = () => toggleDailyItem(t.id);
           } else if (t.type === 'Mingguan') { 
             isDone = (weeklyHistory[currentWeek] || []).includes(t.id);
@@ -157,7 +184,7 @@ export default function DashboardPage() {
                   <div className="bg-primary/10 p-2 rounded-lg text-primary"><Icon size={16}/></div>
                   <div>
                     <p className={`font-medium text-sm ${isDone ? 'line-through' : ''}`}>{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">{t.type === 'Sekali Waktu' && isDone ? 'Auto-delete in 12h' : t.type}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{t.type === 'Sekali Waktu' && isDone ? 'Tugas Akan terhapus otomatis dalam 5 jam' : t.type}</p>
                   </div>
                 </div>
                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDone ? 'bg-primary border-primary' : ''}`}>
