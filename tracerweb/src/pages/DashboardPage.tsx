@@ -72,13 +72,19 @@ export default function DashboardPage() {
   
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-400">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mx-auto p-4 md:p-6 lg:p-8">      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Hari Ini</h1>
-          <p className="text-muted-foreground">{new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}</p>
+          <h1 className="text-2xl font-bold tracking-tight">Hari Ini</h1>
+          <p className="text-muted-foreground">
+             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
         </div>
-        <Badge variant="outline" className="text-lg px-3 py-1">{progress}%</Badge>
+
+        <div className="w-full md:w-64">
+           {/* ... Kode Progress Bar & Grade ... */}
+           {/* Masukkan kode progress bar lingkaran/text grade disini */}
+        </div>
       </div>
 
       {/* AI Card */}
@@ -93,112 +99,114 @@ export default function DashboardPage() {
       </Card> */}
 
       {/* Kebiasaan */}
-      <section className="space-y-3">
-        <h3 className="font-semibold text-lg flex items-center gap-2"><Zap className="text-yellow-500" size={18}/> Kebiasaan</h3>
-        <Progress value={progress} className="h-2" />
-        {habits.map(h => {
-          const isDone = completedHabits.includes(h.id);
-          // Panggil fungsi logic streak disini
-          const streak = getHabitStreak(h.id); 
-
-          return (
-            <div 
-              key={h.id} 
-              onClick={() => toggleDailyItem(h.id)} 
-              className={`relative flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all duration-200 group
-                ${isDone 
-                  ? 'bg-muted/50 border-muted opacity-80' // Style saat selesai
-                  : 'bg-card border-border hover:border-primary hover:shadow-md' // Style saat belum
-                }`}
-            >
-              
-              {/* BAGIAN KIRI: Warna & Teks */}
-              <div className="flex items-center gap-4">
-                {/* Indikator Warna (Garis Tegak) */}
-                <div className={`w-1.5 h-10 rounded-full ${h.color}`}></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="space-y-3">
+          <h3 className="font-semibold text-lg flex items-center gap-2"><Zap className="text-yellow-500" size={18}/> Kebiasaan</h3>
+          <Progress value={progress} className="h-2" />
+          {habits.map(h => {
+            const isDone = completedHabits.includes(h.id);
+            // Panggil fungsi logic streak disini
+            const streak = getHabitStreak(h.id); 
+            return (
+              <div 
+                key={h.id} 
+                onClick={() => toggleDailyItem(h.id)} 
+                className={`relative flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all duration-200 group
+                  ${isDone 
+                    ? 'bg-muted/50 border-muted opacity-80' // Style saat selesai
+                    : 'bg-card border-border hover:border-primary hover:shadow-md' // Style saat belum
+                  }`}
+              >
                 
-                <div className="flex flex-col">
-                  {/* Nama Kebiasaan */}
-                  <span className={`font-semibold text-base ${isDone ? 'line-through text-muted-foreground' : ''}`}>
-                    {h.name}
-                  </span>
-
-                  {/* --- POSISI STREAK (DI DALAM KOTAK, BAWAH NAMA) --- */}
-                  {streak > 0 ? (
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
-                        <Flame size={12} className="fill-orange-500 animate-pulse" /> 
-                        {streak} Hari Beruntun
-                      </span>
-                    </div>
-                  ) : (
-                    // (Opsional) Teks penyemangat jika streak 0
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                      Mulai streak barumu hari ini!
+                {/* BAGIAN KIRI: Warna & Teks */}
+                <div className="flex items-center gap-4">
+                  {/* Indikator Warna (Garis Tegak) */}
+                  <div className={`w-1.5 h-10 rounded-full ${h.color}`}></div>
+                  
+                  <div className="flex flex-col">
+                    {/* Nama Kebiasaan */}
+                    <span className={`font-semibold text-base ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                      {h.name}
                     </span>
-                  )}
-                </div>
-              </div>
 
-              {/* BAGIAN KANAN: Checkmark */}
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
-                ${isDone 
-                  ? 'bg-green-500 border-green-500 scale-110' 
-                  : 'border-muted-foreground/20 group-hover:border-primary/50'
-                }
-              `}>
-                {isDone && <Check size={16} className="text-white font-bold" strokeWidth={4} />}
-              </div>
-
-            </div>
-          );
-        })}
-      </section>
-
-      {/* Tugas */}
-      <section className="space-y-3">
-        <h3 className="font-semibold text-lg flex items-center gap-2"><Clock className="text-blue-500" size={18}/> Tugas</h3>
-        
-        {tasks.map(t => {
-          let isDone = false;
-          let toggleFn = () => {};
-          let Icon = Clock;
-          
-          if (t.type === 'Harian') {
-            isDone = (dailyHistory[today] || []).includes(t.id);
-            toggleFn = () => toggleDailyItem(t.id);
-          } else if (t.type === 'Mingguan') { 
-            isDone = (weeklyHistory[currentWeek] || []).includes(t.id);
-            toggleFn = () => toggleWeeklyItem(t.id);
-          } else if (t.type === 'Bulanan') {
-            isDone = (monthlyHistory[currentMonth] || []).includes(t.id);
-            toggleFn = () => toggleMonthlyItem(t.id);
-            Icon = CalendarDays;
-          } else if (t.type === 'Sekali Waktu') {
-            isDone = !!t.completedAt;
-            toggleFn = () => toggleOneTimeTask(t.id);
-            Icon = Check;
-          }
-
-          return (
-            <Card key={t.id} onClick={toggleFn} className={`cursor-pointer transition-all ${isDone ? 'bg-muted opacity-50' : 'hover:border-primary'}`}>
-              <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 p-2 rounded-lg text-primary"><Icon size={16}/></div>
-                  <div>
-                    <p className={`font-medium text-sm ${isDone ? 'line-through' : ''}`}>{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">{t.type === 'Sekali Waktu' && isDone ? 'Tugas Akan terhapus otomatis dalam 5 jam' : t.type}</p>
+                    {/* --- POSISI STREAK (DI DALAM KOTAK, BAWAH NAMA) --- */}
+                    {streak > 0 ? (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
+                          <Flame size={12} className="fill-orange-500 animate-pulse" /> 
+                          {streak} Hari Beruntun
+                        </span>
+                      </div>
+                    ) : (
+                      // (Opsional) Teks penyemangat jika streak 0
+                      <span className="text-[10px] text-muted-foreground mt-0.5">
+                        Mulai streak barumu hari ini!
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDone ? 'bg-primary border-primary' : ''}`}>
-                  {isDone && <Check size={12} className="text-white"/>}
+
+                {/* BAGIAN KANAN: Checkmark */}
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
+                  ${isDone 
+                    ? 'bg-green-500 border-green-500 scale-110' 
+                    : 'border-muted-foreground/20 group-hover:border-primary/50'
+                  }
+                `}>
+                  {isDone && <Check size={16} className="text-white font-bold" strokeWidth={4} />}
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </section>
+
+              </div>
+            );
+          })}
+        </section>
+
+
+        {/* Tugas */}
+        <section className="space-y-3">
+          <h3 className="font-semibold text-lg flex items-center gap-2"><Clock className="text-blue-500" size={18}/> Tugas</h3>
+          
+          {tasks.map(t => {
+            let isDone = false;
+            let toggleFn = () => {};
+            let Icon = Clock;
+            
+            if (t.type === 'Harian') {
+              isDone = (dailyHistory[today] || []).includes(t.id);
+              toggleFn = () => toggleDailyItem(t.id);
+            } else if (t.type === 'Mingguan') { 
+              isDone = (weeklyHistory[currentWeek] || []).includes(t.id);
+              toggleFn = () => toggleWeeklyItem(t.id);
+            } else if (t.type === 'Bulanan') {
+              isDone = (monthlyHistory[currentMonth] || []).includes(t.id);
+              toggleFn = () => toggleMonthlyItem(t.id);
+              Icon = CalendarDays;
+            } else if (t.type === 'Sekali Waktu') {
+              isDone = !!t.completedAt;
+              toggleFn = () => toggleOneTimeTask(t.id);
+              Icon = Check;
+            }
+
+            return (
+              <Card key={t.id} onClick={toggleFn} className={`cursor-pointer transition-all ${isDone ? 'bg-muted opacity-50' : 'hover:border-primary'}`}>
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-lg text-primary"><Icon size={16}/></div>
+                    <div>
+                      <p className={`font-medium text-sm ${isDone ? 'line-through' : ''}`}>{t.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{t.type === 'Sekali Waktu' && isDone ? 'Tugas Akan terhapus otomatis dalam 5 jam' : t.type}</p>
+                    </div>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDone ? 'bg-primary border-primary' : ''}`}>
+                    {isDone && <Check size={12} className="text-white"/>}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </section>
+      </div>
     </div>
   );
 }
