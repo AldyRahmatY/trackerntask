@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"; // Tambah useMemo untuk performa
+import { useState } from "react";
 import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

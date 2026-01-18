@@ -1,7 +1,7 @@
 import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Check, 
   // Sparkles, 
   Clock, CalendarDays, Zap, Flame } from "lucide-react";
