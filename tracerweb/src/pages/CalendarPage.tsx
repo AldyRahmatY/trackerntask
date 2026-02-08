@@ -166,11 +166,11 @@ export default function CalendarPage() {
 
                       {/* List Selesai */}
                       <div>
-                          <p className="text-[10px] font-bold text-teal-600 uppercase mb-1 flex items-center gap-1">
+                          <p className="text-[10px] font-bold text-teal-600  uppercase mb-1 flex items-center gap-1">
                             <Check size={10} strokeWidth={4}/> Selesai ({completedList.length})
                           </p>
                           {completedList.length > 0 ? (
-                            <ul className="text-xs space-y-1 text-slate-700">
+                            <ul className="text-xs space-y-1 text-slate-700 dark:text-slate-100">
                                 {completedList.map(h => (
                                   <li key={h.id} className="truncate">• {h.name}</li>
                                 ))}
@@ -184,7 +184,7 @@ export default function CalendarPage() {
                             <X size={10} strokeWidth={4}/> Terlewat ({missedList.length})
                           </p>
                           {missedList.length > 0 ? (
-                            <ul className="text-xs space-y-1 text-slate-500 line-through decoration-slate-300">
+                            <ul className="text-xs space-y-1 text-slate-400 line-through decoration-slate-300">
                                 {missedList.map(h => (
                                   <li key={h.id} className="truncate">• {h.name}</li>
                                 ))}
