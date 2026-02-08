@@ -14,6 +14,7 @@ export interface Task {
   id: string;
   name: string;
   type: TaskType;
+  priority?: 'low' | 'medium' | 'high';
   completedAt: number | null; // Timestamp
 }
 
@@ -26,7 +27,7 @@ interface TrackerContextType {
   resetHour: number;                  // Tambah ini
   setResetHour: (hour: number) => void;
   addHabit: (name: string) => void;
-  addTask: (name: string, type: TaskType) => void;
+  addTask: (name: string, type: TaskType, priority?: 'low' | 'medium' | 'high') => void;  
   deleteItem: (id: string, type: 'habit' | 'task') => void;
 
   toggleDailyItem: (id: string) => void;
@@ -166,9 +167,16 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     setHabits([...habits, { id: `h-${Date.now()}`, name, color: colors[Math.floor(Math.random() * colors.length)] }]);
   };
 
-  const addTask = (name: string, type: TaskType) => {
-    setTasks([...tasks, { id: `t-${Date.now()}`, name, type, completedAt: null }]);
-  };
+  const addTask = (name: string, type: TaskType, priority: 'low' | 'medium' | 'high' = 'medium') => {
+      const newTask: Task = {
+        id: `t-${Date.now()}`,
+        name,
+        type,
+        priority, // ✨ Simpan prioritas
+        completedAt: null, // Default value for completedAt
+      };
+      setTasks([...tasks, newTask]);
+    };
 
 const deleteItem = (id: string, type: 'habit' | 'task') => {
     if (confirm('Hapus item ini?')) {

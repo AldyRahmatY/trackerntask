@@ -1,10 +1,10 @@
 import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 // import { Badge } from "@/components/ui/badge";
 import { Check, 
   // Sparkles, 
-  Clock, CalendarDays, Zap, Flame } from "lucide-react";
+  Clock, CalendarDays, Zap, Flame, ArrowUp, Minus, ArrowDown } from "lucide-react";
 import { useEffect, 
   // useState
         } from "react";
@@ -64,22 +64,34 @@ export default function DashboardPage() {
   // Logic Progress
   const completedHabits = dailyHistory[today] || [];
 
+  const priorityScore = { high: 3, medium: 2, low: 1 };
+
   // const handleAiMotivation = async () => {
   //   setMotivation("Loading...");
   //   // Simulasi Gemini AI
   //   setTimeout(() => setMotivation("Jangan lupa napas, tugas numpuk itu biasa! 🚀"), 1000);
   // };
   
+  const sortedTasks = [...tasks].sort((a, b) => {
+    // 1. Cek status selesai dulu (yang belum selesai di atas)
+    // Anggap kita punya logic isDone di dalam map nanti, tapi untuk sorting raw tasks:
+    // Kita sort berdasarkan Priority Score dulu
+    const scoreA = priorityScore[a.priority || 'medium']; // Default medium jika data lama
+    const scoreB = priorityScore[b.priority || 'medium'];
+    return scoreB - scoreA; // Descending (3, 2, 1)
+  });
+
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mx-auto p-4 md:p-6 lg:p-8">      
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Hari Ini</h1>
           <p className="text-muted-foreground">
              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
+        
 
         <div className="w-full md:w-64">
            {/* ... Kode Progress Bar & Grade ... */}
@@ -100,9 +112,51 @@ export default function DashboardPage() {
 
       {/* Kebiasaan */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="space-y-3">
-          <h3 className="font-semibold text-lg flex items-center gap-2"><Zap className="text-yellow-500" size={18}/> Kebiasaan</h3>
-          <Progress value={progress} className="h-2" />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <Zap className="text-yellow-500 fill-yellow-500" size={20}/> Kebiasaan
+              </h3>
+              <span className="text-sm font-semibold text-muted-foreground">
+                {validCompletedHabits.length}/{habits.length} Selesai
+              </span>
+            </div>
+
+      {/* --- CUSTOM PROGRESS BAR --- */}
+        <div className="relative w-full">
+          
+          {/* Label Motivasi (Berubah sesuai progress) */}
+          <div className="flex justify-between text-xs font-bold mb-1.5 uppercase tracking-wide">
+            <span className={`${progress === 100 ? 'text-emerald-600' : 'text-slate-500'}`}>
+              {progress === 0 ? "Ayo Mulai!" : 
+              progress < 50 ? "Sedikit lagi..." : 
+              progress < 100 ? "Hampir Selesai!" : "Sempurna! 🎉"}
+            </span>
+            <span className="text-primary">{progress}%</span>
+          </div>
+
+          {/* Batang Progress (Background) */}
+          <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
+            {/* Batang Progress (Isi / Fill) */}
+            <div 
+              className={`h-full transition-all duration-1000 ease-out flex items-center justify-end pr-1 shadow-md
+                ${progress === 100 
+                  ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' // Hijau Sukses
+                  : 'bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400' // Gradasi Keren
+                }
+              `}
+              style={{ width: `${progress}%` }}
+            >
+              {/* Efek Kilau/Shine (Garis putih tipis miring) */}
+              {progress > 0 && (
+                <div className="w-full h-full opacity-20 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.5)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer"></div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* --- END CUSTOM PROGRESS BAR --- */}
+          
+          {/* <Progress value={progress} className="h-2" /> */}
           {habits.map(h => {
             const isDone = completedHabits.includes(h.id);
             // Panggil fungsi logic streak disini
@@ -125,7 +179,7 @@ export default function DashboardPage() {
                   
                   <div className="flex flex-col">
                     {/* Nama Kebiasaan */}
-                    <span className={`font-semibold text-base ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                    <span className={`font-semibold text-base tracking-wide ${isDone ? 'line-through text-muted-foreground' : ''}`}>
                       {h.name}
                     </span>
 
@@ -164,10 +218,17 @@ export default function DashboardPage() {
 
 
         {/* Tugas */}
-        <section className="space-y-3">
-          <h3 className="font-semibold text-lg flex items-center gap-2"><Clock className="text-blue-500" size={18}/> Tugas</h3>
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-lg flex items-center gap-2">🕒 Tugas</h3>
+            
+            {/* Info Chip Kecil */}
+            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-medium">
+               Diurutkan berdasarkan Prioritas
+            </span>
+          </div>
           
-          {tasks.map(t => {
+          {sortedTasks.map(t => {
             let isDone = false;
             let toggleFn = () => {};
             let Icon = Clock;
@@ -188,17 +249,48 @@ export default function DashboardPage() {
               Icon = Check;
             }
 
+          const priorityStyles = {
+              high: { border: 'border-l-rose-500', bg: 'bg-rose-50', text: 'text-rose-600', icon: ArrowUp },
+              medium: { border: 'border-l-amber-500', bg: 'bg-amber-50', text: 'text-amber-600', icon: Minus },
+              low: { border: 'border-l-blue-500', bg: 'bg-blue-50', text: 'text-blue-600', icon: ArrowDown },
+            };
+          const style = priorityStyles[t.priority || 'medium'];
+          const PriorityIcon = style.icon;
+
             return (
-              <Card key={t.id} onClick={toggleFn} className={`cursor-pointer transition-all ${isDone ? 'bg-muted opacity-50' : 'hover:border-primary'}`}>
+              <Card key={t.id} onClick={toggleFn} 
+                className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${style.border} ${isDone ? 'opacity-60 grayscale' : ''}`}
+              >
                 <CardContent className="p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-lg text-primary"><Icon size={16}/></div>
+                    
+                    {/* Icon Tipe Tugas (Harian/Mingguan) */}
+                    <div className={`p-2 rounded-lg ${isDone ? 'bg-slate-100 text-slate-400' : 'bg-primary/5 text-primary'}`}>
+                      <Icon size={18}/>
+                    </div>
+
                     <div>
-                      <p className={`font-medium text-sm ${isDone ? 'line-through' : ''}`}>{t.name}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{t.type === 'Sekali Waktu' && isDone ? 'Tugas Akan terhapus otomatis dalam 5 jam' : t.type}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-medium text-sm ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                          {t.name}
+                        </p>
+                        
+                        {/* BADGE PRIORITAS */}
+                        {!isDone && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-bold uppercase ${style.bg} ${style.text}`}>
+                            <PriorityIcon size={10} strokeWidth={3} /> 
+                            {t.priority === 'high' ? 'Prioritas Tinggi' : t.priority === 'low' ? 'Santai': 'Segera'}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <p className="text-[10px] text-muted-foreground uppercase mt-0.5 font-medium tracking-wide">
+                          {t.type}
+                      </p>
                     </div>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDone ? 'bg-primary border-primary' : ''}`}>
+
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isDone ? 'bg-primary border-primary' : 'border-slate-300'}`}>
                     {isDone && <Check size={12} className="text-white"/>}
                   </div>
                 </CardContent>

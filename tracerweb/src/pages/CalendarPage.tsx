@@ -67,27 +67,27 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-         <Card className="bg-amber-50 border-amber-200">
+         <Card className="bg-amber-50 border-amber-300 dark:bg-amber-600/10 dark:border-amber-300">
             <CardContent className="p-4 flex items-center gap-3">
-               <div className="bg-amber-100 p-2 rounded-full text-amber-600">
+               <div className="bg-amber-200 p-2 rounded-full text-amber-800 dark:bg-amber-600/60 dark:text-amber-300">
                 <Trophy size={20} />
                </div>
                <div>
-                  <p className="text-xs text-amber-700 font-bold uppercase">Hari Terbaik</p>
-                  <p className="text-sm font-medium text-amber-900">
+                  <p className="text-xs text-amber-700 dark:text-amber-400 font-bold uppercase">Hari Terbaik</p>
+                  <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
                      {bestDay.count > 0 ? `Tanggal ${bestDay.date} (${bestDay.count} Selesai)` : "Belum ada data"}
                   </p>
                </div>
             </CardContent>
          </Card>
-         <Card className="bg-blue-50 border-blue-200">
+         <Card className="bg-sky-50 border-sky-300 dark:bg-sky-900/30 dark:border-sky-300">
             <CardContent className="p-4 flex items-center gap-3">
-               <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+               <div className="bg-sky-100 p-2 rounded-full text-sky-600 dark:bg-sky-600/60 dark:text-sky-300">
                   <Check size={20} />
                </div>
                <div>
-                  <p className="text-xs text-blue-700 font-bold uppercase">Total Bulan Ini</p>
-                  <p className="text-sm font-medium text-blue-900">
+                  <p className="text-xs text-sky-700 dark:text-sky-400 font-bold uppercase">Total Bulan Ini</p>
+                  <p className="text-sm font-medium text-sky-900 dark:text-sky-100">
                      {totalCompletedMonth} Kebiasaan
                   </p>
                </div>

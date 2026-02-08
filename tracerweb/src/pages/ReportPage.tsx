@@ -108,59 +108,63 @@ export default function ReportPage() {
           <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* KARTU NILAI UTAMA (TETAP DIPERTAHANKAN) */}
-        <Card className="relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${gradientBar}`}></div>
-          <CardContent className="pt-8 text-center flex flex-col items-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Nilai Keseluruhan</span>
-            <div className={`text-8xl font-black ${gradeColor} drop-shadow-sm leading-none`}>
-              {grade}
-            </div>
-            <div className="text-3xl font-bold mt-2">{percentage}%</div>
-            <p className="text-muted-foreground italic mt-1">"{message}"</p>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 1. KOLOM KIRI: RAPOR (1 Baris Penuh - Full Height) */}
+      <Card className="relative overflow-hidden h-full flex flex-col justify-center shadow-md border-0">
+        <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${gradientBar}`}></div>
+        <CardContent className="pt-8 pb-8 text-center flex flex-col items-center justify-center flex-grow">
+          <span className="text-s font-bold uppercase tracking-wider text-muted-foreground mb-4">Nilai Keseluruhan</span>
+          <div className={`text-9xl font-black ${gradeColor} drop-shadow-sm leading-none`}>
+            {grade}
+          </div>
+          <div className="text-3xl font-bold mt-4">{percentage}%</div>
+          <p className="text-muted-foreground italic mt-2">"{message}"</p>
+        </CardContent>
+      </Card>
+
+      {/* 2. KOLOM KANAN: STATISTIK (2 Baris Ditumpuk) */}
+      <div className="flex flex-col gap-4 h-full">
+        
+        {/* Baris 1: Paling Rajin */}
+        <Card className="flex-1 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 flex flex-col justify-center shadow-sm">
+          <CardContent className="p-6 flex items-center gap-5">
+              <div className="bg-emerald-200 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-300 shadow-sm">
+                <Award size={24} />
+              </div>
+              <div>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider">Paling Rajin</span>
+                <p className="font-bold text-lg truncate text-emerald-950 dark:text-emerald-100 mt-1">
+                    {bestHabit ? bestHabit.name : "-"}
+                </p>
+              </div>
           </CardContent>
         </Card>
 
-      {/* DETAIL PER KEBIASAAN (SAMA SEPERTI SEBELUMNYA) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <CalendarDays size={18} className="text-primary"/> Detail Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {habits.length === 0 && <p className="text-sm text-muted-foreground text-center">Belum ada kebiasaan.</p>}
-          
-          {habits.map(habit => {
-            const count = habitCounts[habit.id] || 0;
-            // Hitung persentase berdasarkan hari yang sudah berlalu saja (agar adil)
-            const passedDays = daysInMonth; // Atau mau pakai logic 'date <= today' ? Disini saya pakai total bulan biar jadi target
-            const habitPercent = passedDays > 0 ? Math.round((count / passedDays) * 100) : 0;
-
-            return (
-              <div key={habit.id} className="space-y-1.5">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${habit.color}`}></div>
-                    {habit.name}
-                  </span>
-                  <span className="font-bold text-muted-foreground">{habitPercent}%</span>
-                </div>
-                <Progress value={habitPercent} className="h-2" />
+        {/* Baris 2: Jarang Dilakukan */}
+        <Card className="flex-1 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800 flex flex-col justify-center shadow-sm">
+          <CardContent className="p-6 flex items-center gap-5">
+              <div className="bg-rose-200 dark:bg-rose-800 w-12 h-12 rounded-full flex items-center justify-center text-rose-700 dark:text-rose-300 shadow-sm">
+                <AlertCircle size={24} />
               </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+              <div>
+                <span className="text-xs text-rose-600 dark:text-rose-400 font-extrabold uppercase tracking-wider">Jarang Disentuh</span>
+                <p className="font-bold text-lg truncate text-rose-950 dark:text-rose-100 mt-1">
+                    {worstHabit ? worstHabit.name : "-"}
+                </p>
+              </div>
+          </CardContent>
+        </Card>
+
       </div>
+    </div>
 
 
       {/* ✨ FITUR BARU: GRAFIK TREN */}
       <Card>
         <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <TrendingUp size={16} className="text-primary"/> Tren Mingguan
+            <CardTitle className="text-base font-bold flex items-center gap-2 tracking-wide">
+              <TrendingUp size={18} className="text-primary"/> Tren Mingguan
             </CardTitle>
         </CardHeader>
         <CardContent>
@@ -195,38 +199,35 @@ export default function ReportPage() {
         </CardContent>
       </Card>
 
-      {/* ✨ FITUR BARU: INSIGHT CARDS (Grid 2 Kolom) */}
-      <div className="grid grid-cols-2 gap-4">
-          {/* TERBAIK */}
-          <Card className="bg-emerald-50 dark:bg-emerald-900 border-emerald-100 shadow-sm">
-            <CardContent className="p-4 flex flex-col gap-2">
-                <div className="bg-emerald-100 w-8 h-8 rounded-full flex items-center justify-center text-emerald-600">
-                  <Award size={16} />
-                </div>
-                <div>
-                  <span className="text-[13px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Paling Rajin</span>
-                  <p className="font-semibold text-sm truncate text-emerald-950 dark:text-white">
-                      {bestHabit ? bestHabit.name : "-"}
-                  </p>
-                </div>
-            </CardContent>
-          </Card>
+    <Card className="shadow-md border-0">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2 tracking-wide">
+          <CalendarDays size={18} className="text-primary"/> Detail Progress
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {habits.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Belum ada kebiasaan.</p>}
+        
+        {habits.map(habit => {
+          const count = habitCounts[habit.id] || 0;
+          const passedDays = daysInMonth; 
+          const habitPercent = passedDays > 0 ? Math.round((count / passedDays) * 100) : 0;
 
-          {/* TERBURUK */}
-          <Card className="bg-rose-50 dark:bg-rose-800 border-rose-100 shadow-sm">
-            <CardContent className="p-4 flex flex-col gap-2">
-                <div className="bg-rose-100 w-8 h-8 rounded-full flex items-center justify-center text-rose-600">
-                  <AlertCircle size={16} />
-                </div>
-                <div>
-                  <span className="text-[13px] text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider">Jarang Dilakukan</span>
-                  <p className="font-semibold text-sm truncate text-rose-950 dark:text-white">
-                      {worstHabit ? worstHabit.name : "-"}
-                  </p>
-                </div>
-            </CardContent>
-          </Card>
-      </div>
+          return (
+            <div key={habit.id} className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${habit.color} shadow-sm ring-1 ring-offset-1 ring-slate-200`}></div>
+                  {habit.name}
+                </span>
+                <span className="font-bold text-muted-foreground">{habitPercent}%</span>
+              </div>
+              <Progress value={habitPercent} className="h-3 bg-secondary rounded-full" />
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
 
       {/* GRID STATISTIK KECIL (SAMA SEPERTI SEBELUMNYA) */}
       <div className="grid grid-cols-2 gap-4">
@@ -234,14 +235,14 @@ export default function ReportPage() {
           <CardContent className="p-4 flex flex-col items-center text-center">
             <Target className="text-indigo-500 mb-2" size={24} />
             <div className="text-2xl font-bold">{totalCompleted}</div>
-            <span className="text-xs text-muted-foreground uppercase font-bold">Total Selesai</span>
+            <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Total Selesai</span>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col items-center text-center">
             <Trophy className="text-yellow-500 mb-2" size={24} />
             <div className="text-2xl font-bold">{perfectDays}</div>
-            <span className="text-xs text-muted-foreground uppercase font-bold">Hari Sempurna</span>
+            <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Hari Sempurna</span>
           </CardContent>
         </Card>
       </div>

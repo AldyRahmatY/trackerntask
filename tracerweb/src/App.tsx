@@ -121,7 +121,7 @@ function App() {
       <TrackerProvider>
         <BrowserRouter>
           {/* Container Luar: Mengatur Background & Layout Dasar */}
-          <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 font-sans text-foreground flex flex-col md:flex-row transition-colors duration-300 md:pl-20">
+          <div className="min-h-screen bg-gray-50/50 dark:bg-neutral-950 font-sans text-foreground flex flex-col md:flex-row transition-colors duration-300 md:pl-20">
             
             {/* Navbar: Di Bawah (Mobile) atau Di Samping (Desktop) */}
             <Navbar />
