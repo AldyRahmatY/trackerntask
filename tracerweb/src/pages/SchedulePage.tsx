@@ -36,10 +36,10 @@ export default function SettingsPage() {
 
   // Helper untuk opsi tipe tugas (Mapping ID ke Label Indonesia)
   const taskTypeOptions = [
-    { id: 'daily', label: 'Harian' },
-    { id: 'weekly', label: 'Mingguan' },
-    { id: 'monthly', label: 'Bulanan' },
-    { id: 'onetime', label: 'Sekali Waktu' },
+    { id: 'Harian', label: 'Harian' },
+    { id: 'Mingguan', label: 'Mingguan' },
+    { id: 'Bulanan', label: 'Bulanan' },
+    { id: 'Sekali Waktu', label: 'Sekali Waktu' },
   ];
 
   const helpContent = {
