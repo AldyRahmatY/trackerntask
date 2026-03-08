@@ -123,7 +123,8 @@ export default function TabunganPage() {
       </div>
 
       {/* FORM TAMBAH TARGET BARU */}
-      <Card className="bg-slate-50 dark:bg-slate-900/50 border-dashed border-2">
+      {/* <Card className="bg-slate-50 dark:bg-slate-900/50 border-dashed border-2"> */}
+      <Card className="border-dashed border-2">
         <CardContent className="p-5 space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Target size={16} /> Buat Target Baru
@@ -150,7 +151,7 @@ export default function TabunganPage() {
             </div>
 
             {/* TOGGLE MODE MENABUNG (TAMBAH) */}
-            <div className="md:col-span-2 mt-2 space-y-3 p-4 bg-white dark:bg-slate-950 rounded-xl border">
+            <div className="md:col-span-2 mt-2 space-y-3 p-4 rounded-xl border">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pilih Gaya Nabungmu:</label>
               <div className="flex gap-2">
                 <Button variant={savingMode === 'amount' ? 'default' : 'outline'} onClick={() => setSavingMode('amount')} className={`flex-1 gap-2 ${savingMode === 'amount' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
