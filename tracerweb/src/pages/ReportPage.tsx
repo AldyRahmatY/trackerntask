@@ -131,10 +131,10 @@ export default function ReportPage() {
         {/* Baris 1: Paling Rajin */}
         <Card className="flex-1 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 flex flex-col justify-center shadow-sm">
           <CardContent className="p-6 flex items-center gap-5">
-              <div className="bg-emerald-200 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-300 shadow-sm">
+              <div className="shrink-0 bg-emerald-200 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-300 shadow-sm">
                 <Award size={24} />
               </div>
-              <div>
+              <div className="text-left flex-1 min-w-0">
                 <span className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider">Paling Rajin</span>
                 <p className="font-bold text-lg truncate text-emerald-950 dark:text-emerald-100 mt-1">
                     {bestHabit ? bestHabit.name : "-"}
@@ -146,10 +146,10 @@ export default function ReportPage() {
         {/* Baris 2: Jarang Dilakukan */}
         <Card className="flex-1 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800 flex flex-col justify-center shadow-sm">
           <CardContent className="p-6 flex items-center gap-5">
-              <div className="bg-rose-200 dark:bg-rose-800 w-12 h-12 rounded-full flex items-center justify-center text-rose-700 dark:text-rose-300 shadow-sm">
+              <div className="shrink-0 bg-rose-200 dark:bg-rose-800 w-12 h-12 rounded-full flex items-center justify-center text-rose-700 dark:text-rose-300 shadow-sm">
                 <AlertCircle size={24} />
               </div>
-              <div>
+              <div className="text-left flex-1 min-w-0">
                 <span className="text-xs text-rose-600 dark:text-rose-400 font-extrabold uppercase tracking-wider">Jarang Disentuh</span>
                 <p className="font-bold text-lg truncate text-rose-950 dark:text-rose-100 mt-1">
                     {worstHabit ? worstHabit.name : "-"}

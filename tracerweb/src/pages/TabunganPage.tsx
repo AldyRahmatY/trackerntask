@@ -146,21 +146,21 @@ export default function TabunganPage() {
                    <option value="Mingguan">Mingguan</option>
                    <option value="Bebas">Bebas</option>
                  </select>
-                 {freqType === "Mingguan" && <Input type="number" className="w-24" value={freqCount} onChange={(e) => setFreqCount(e.target.value)} />}
+                 {freqType === "Mingguan" && <Input type="number" placeholder="brp kali/minggu" className="w-80" value={freqCount} onChange={(e) => setFreqCount(e.target.value)} />}
                </div>
             </div>
 
             {/* TOGGLE MODE MENABUNG (TAMBAH) */}
             <div className="md:col-span-2 mt-2 space-y-3 p-4 rounded-xl border">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pilih Gaya Nabungmu:</label>
-              <div className="flex gap-2">
-                <Button variant={savingMode === 'amount' ? 'default' : 'outline'} onClick={() => setSavingMode('amount')} className={`flex-1 gap-2 ${savingMode === 'amount' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
-                  <Coins size={16}/> Nominal Rutin
-                </Button>
-                <Button variant={savingMode === 'date' ? 'default' : 'outline'} onClick={() => setSavingMode('date')} className={`flex-1 gap-2 ${savingMode === 'date' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
-                  <Timer size={16}/> Tentukan Deadline
-                </Button>
-              </div>
+                <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+                  <Button variant={savingMode === 'amount' ? 'default' : 'outline'} onClick={() => setSavingMode('amount')} className={`flex-1 flex items-center justify-center gap-2 h-10 ${savingMode === 'amount' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}>
+                    <Coins size={16}/> Nominal Rutin
+                  </Button>
+                  <Button variant={savingMode === 'date' ? 'default' : 'outline'} onClick={() => setSavingMode('date')} className={`flex-1 flex items-center justify-center gap-2 h-10 ${savingMode === 'date' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}>
+                    <Timer size={16}/> Tentukan Deadline
+                  </Button>
+                </div>
 
               {savingMode === 'amount' ? (
                 <div className="space-y-1.5 pt-2 animate-in fade-in">
@@ -222,7 +222,7 @@ export default function TabunganPage() {
                     {/* TOGGLE MODE MENABUNG (EDIT) */}
                     <div className="md:col-span-2 mt-2 space-y-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border">
                       <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gaya Nabung:</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
                         <Button variant={editSavingMode === 'amount' ? 'default' : 'outline'} onClick={() => setEditSavingMode('amount')} className={`flex-1 gap-2 ${editSavingMode === 'amount' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
                           <Coins size={14}/> Nominal Rutin
                         </Button>
