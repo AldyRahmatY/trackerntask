@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useTracker } from "@/context/TrackerContext";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, AlertTriangle } from "lucide-react";
+import { Download, Upload, AlertTriangle, Settings } from "lucide-react";
 import { Moon } from "lucide-react";
 
 export default function SettingsPage() {
@@ -67,7 +67,9 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-400 mx-auto p-4 md:p-6 lg:p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold">Pengaturan</h1>
+      <h1 className="text-2xl font-bold">
+        <Settings size={24} className="inline-block mr-2 text-muted-foreground text-emerald-500"/>
+        Pengaturan</h1>
   {/* --- MENU BARU: ATUR JAM RESET --- */}
         <div className="bg-card p-4 rounded-xl border shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">

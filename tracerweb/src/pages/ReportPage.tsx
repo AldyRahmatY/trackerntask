@@ -3,7 +3,7 @@ import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Trophy, CalendarDays, Target, TrendingUp, AlertCircle, Award } from "lucide-react"; // Icon baru
+import { ChevronLeft, ChevronRight, Trophy, CalendarDays, Target, TrendingUp, AlertCircle, Award, BarChart2 } from "lucide-react"; // Icon baru
 import { LineChart, Line, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ReportPage() {
@@ -97,7 +97,9 @@ export default function ReportPage() {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Rapor</h1>
+          <h1 className="text-2xl font-bold">
+            <BarChart2 size={24} className="inline-block mr-2 text-emerald-500"/>
+            Rapor</h1>
           <p className="text-muted-foreground">Analisa performa bulanan.</p>
         </div>
         <div className="flex items-center gap-1 bg-card border p-1 rounded-lg shadow-sm">
@@ -220,8 +222,15 @@ export default function ReportPage() {
                   <div className={`w-3 h-3 rounded-full ${habit.color} shadow-sm ring-1 ring-offset-1 ring-slate-200`}></div>
                   {habit.name}
                 </span>
-                <span className="font-bold text-muted-foreground">{habitPercent}%</span>
-              </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
+                      {count} Kali
+                    </span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 w-8 text-right">
+                      {habitPercent}%
+                    </span>
+                  </div>
+                </div>
               <Progress value={habitPercent} className="h-3 bg-secondary rounded-full" />
             </div>
           );

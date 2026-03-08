@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTracker } from "@/context/TrackerContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Check, ChevronLeft, ChevronRight, Trophy, X } from "lucide-react";
+import { Calendar, Check, ChevronLeft, ChevronRight, Trophy, X } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 export default function CalendarPage() {
@@ -48,7 +48,9 @@ export default function CalendarPage() {
       {/* HEADER KALENDER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Kalender</h1>
+          <h1 className="text-2xl font-bold">
+            <Calendar size={24} className="inline-block mr-2 text-emerald-500"/>
+            Kalender</h1>
           <p className="text-muted-foreground">Riwayat konsistensi kamu.</p>
         </div>
         

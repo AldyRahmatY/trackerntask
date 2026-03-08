@@ -18,17 +18,48 @@ export interface Task {
   completedAt: number | null; // Timestamp
 }
 
+export interface SavingHistory {
+  id: string;
+  date: string;
+  amount: number; // Bisa positif (nabung) atau negatif (tarik uang)
+  note: string;
+}
+
+export type SavingFrequency = 'Harian' | 'Mingguan' | 'Bebas';
+
+export interface SavingGoal {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadlineDate: string; // Format: YYYY-MM-DD
+  frequencyType: SavingFrequency;
+  frequencyCount: number; // Contoh: 3 (untuk 3x seminggu)
+  history: SavingHistory[];
+  savingMode?: 'date' | 'amount'; // Untuk tahu dia pakai mode tanggal atau nominal
+  plannedAmount?: number;         // Untuk menyimpan angka 5.000/hari nya
+}
+
 interface TrackerContextType {
   habits: Habit[];
   tasks: Task[];
   dailyHistory: Record<string, string[]>; // 'YYYY-MM-DD': [habitId1, taskId2]
   weeklyHistory: Record<string, string[]>;
   monthlyHistory: Record<string, string[]>; // 'YYYY-MM': [taskId3]
-  resetHour: number;                  // Tambah ini
+  resetHour: number;
+  savings: SavingGoal[];
+
+  addSavingGoal: (title: string, targetAmount: number, deadlineDate: string, frequencyType: SavingFrequency, frequencyCount: number, savingMode?: 'date' | 'amount', plannedAmount?: number) => void;
+  addSavingTransaction: (goalId: string, amount: number, note: string) => void;
+  deleteSavingGoal: (id: string) => void;
+  editSavingGoal: (id: string, updatedGoal: Partial<SavingGoal>) => void;
+  
   setResetHour: (hour: number) => void;
   addHabit: (name: string) => void;
   addTask: (name: string, type: TaskType, priority?: 'low' | 'medium' | 'high') => void;  
   deleteItem: (id: string, type: 'habit' | 'task') => void;
+  editHabit: (id: string, newName: string) => void;
+  editTask: (id: string, updatedTask: Partial<Task>) => void;
 
   toggleDailyItem: (id: string) => void;
   toggleWeeklyItem: (id: string) => void;
@@ -44,6 +75,8 @@ interface TrackerContextType {
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
 
 export const TrackerProvider = ({ children }: { children: ReactNode }) => {
+  
+  // RESET HOUR LOGIC
 // 1. Tambah State untuk Reset Hour (Default 0 = Tengah Malam)
   const [resetHour, setResetHour] = useState<number>(() => 
     parseInt(localStorage.getItem('resetHour') || '0')
@@ -64,7 +97,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   };
 
 
-  // --- STATE ---
+  // LOGIC HABITS & TASKS
   const [habits, setHabits] = useState<Habit[]>(() => 
     JSON.parse(localStorage.getItem('myHabits') || '[]'));
   
@@ -86,11 +119,11 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     return d.toISOString().split('T')[0];
   };
 
+  // sTREAK LOGIC: Hitung streak berdasarkan dailyHistory
   const getHabitStreak = (habitId: string) => {
     let streak = 0;
     let daysAgo = 0;
 
-    // Cek apakah hari ini sudah dicentang?
     const today = getPreviousDate(0);
     const isDoneToday = (dailyHistory[today] || []).includes(habitId);
 
@@ -178,22 +211,39 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       setTasks([...tasks, newTask]);
     };
 
-const deleteItem = (id: string, type: 'habit' | 'task') => {
-    if (confirm('Hapus item ini?')) {
-      if (type === 'habit') {
-        setHabits(habits.filter(h => h.id !== id));
-        setDailyHistory(prev => {
-          const newHistory = { ...prev };
-          Object.keys(newHistory).forEach(date => {
-            newHistory[date] = newHistory[date].filter(itemId => itemId !== id);
-          });
-          return newHistory;
-        });
-      } else {
-        setTasks(tasks.filter(t => t.id !== id));
-      }
-    }
+  const editHabit = (id: string, newName: string) => {
+    setHabits(prevHabits => 
+      prevHabits.map(h => 
+        h.id === id ? { ...h, name: newName } : h
+      )
+    );
   };
+
+  // --- FUNGSI EDIT TUGAS ---
+  const editTask = (id: string, updatedTask: Partial<Task>) => {
+    setTasks(prevTasks => 
+      prevTasks.map(t => 
+        t.id === id ? { ...t, ...updatedTask } : t
+      )
+    );
+  };
+
+  const deleteItem = (id: string, type: 'habit' | 'task') => {
+      if (confirm('Hapus item ini?')) {
+        if (type === 'habit') {
+          setHabits(habits.filter(h => h.id !== id));
+          setDailyHistory(prev => {
+            const newHistory = { ...prev };
+            Object.keys(newHistory).forEach(date => {
+              newHistory[date] = newHistory[date].filter(itemId => itemId !== id);
+            });
+            return newHistory;
+          });
+        } else {
+          setTasks(tasks.filter(t => t.id !== id));
+        }
+      }
+    };
 
   const toggleDailyItem = (id: string) => {
     const dateStr = getTodayDate();
@@ -228,13 +278,87 @@ const deleteItem = (id: string, type: 'habit' | 'task') => {
     ));
   };
 
+  // --- LOGIC TABUNGAN ---
+  const [savings, setSavings] = useState<SavingGoal[]>(() => {
+    if (typeof window !== 'undefined') {
+      const localData = localStorage.getItem('mySavings');
+      return localData ? JSON.parse(localData) : [];
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mySavings', JSON.stringify(savings));
+  }, [savings]);
+
+  // --- FUNGSI TABUNGAN ---
+  // 1. Tambah Target Tabungan Baru
+  const addSavingGoal = (
+    title: string, 
+    targetAmount: number, 
+    deadlineDate: string, 
+    frequencyType: SavingFrequency, 
+    frequencyCount: number,
+    savingMode: 'date' | 'amount' = 'date', 
+    plannedAmount: number = 0       
+  ) => {
+    const newGoal: SavingGoal = {
+      id: `save-${Date.now()}`,
+      title,
+      targetAmount,
+      currentAmount: 0,
+      deadlineDate,
+      frequencyType,
+      frequencyCount,
+      savingMode,      
+      plannedAmount,   
+      history: []
+    };
+    setSavings([...savings, newGoal]);
+  };
+
+  // 2. Catat Transaksi (Tambah/Kurang Saldo)
+  const addSavingTransaction = (goalId: string, amount: number, note: string) => {
+    setSavings(prevSavings => 
+      prevSavings.map(goal => {
+        if (goal.id === goalId) {
+          const newTransaction: SavingHistory = {
+            id: `trx-${Date.now()}`,
+            date: new Date().toISOString(),
+            amount: amount,
+            note: note
+          };
+          return {
+            ...goal,
+            currentAmount: goal.currentAmount + amount, // Otomatis update total saldo
+            history: [newTransaction, ...goal.history] // Taruh riwayat terbaru di paling atas
+          };
+        }
+        return goal;
+      })
+    );
+  };
+
+  // 3. Hapus Target Tabungan
+  const deleteSavingGoal = (id: string) => {
+    setSavings(savings.filter(goal => goal.id !== id));
+  };
+
+  const editSavingGoal = (id: string, updatedGoal: Partial<SavingGoal>) => {
+    setSavings(prevSavings => 
+      prevSavings.map(goal => 
+        goal.id === id ? { ...goal, ...updatedGoal } : goal
+      )
+    );
+  };
+
   return (
     <TrackerContext.Provider value={{ 
       habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, 
-      addHabit, addTask, deleteItem, 
+      addHabit, addTask, deleteItem, editHabit, editTask,
       toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask,
       getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak,
-      resetHour, setResetHour,
+      resetHour, setResetHour, savings, addSavingGoal, addSavingTransaction, deleteSavingGoal, editSavingGoal
     }}>
       {children}
     </TrackerContext.Provider>

@@ -250,9 +250,9 @@ export default function DashboardPage() {
             }
 
           const priorityStyles = {
-              high: { border: 'border-l-rose-500', bg: 'bg-rose-50', text: 'text-rose-600', icon: ArrowUp },
-              medium: { border: 'border-l-amber-500', bg: 'bg-amber-50', text: 'text-amber-600', icon: Minus },
-              low: { border: 'border-l-blue-500', bg: 'bg-blue-50', text: 'text-blue-600', icon: ArrowDown },
+              high: { border: 'border-l-rose-500, dark:border-l-rose-500', bg: 'bg-rose-50 dark:bg-rose-500/20', text: 'text-rose-600 dark:text-rose-400', icon: ArrowUp },
+              medium: { border: 'border-l-amber-500 dark:border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400', icon: Minus },
+              low: { border: 'border-l-blue-500 dark:border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/20', text: 'text-blue-600 dark:text-blue-400', icon: ArrowDown },
             };
           const style = priorityStyles[t.priority || 'medium'];
           const PriorityIcon = style.icon;

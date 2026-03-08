@@ -25,7 +25,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import CalendarPage from "@/pages/CalendarPage";
 import ReportPage from "@/pages/ReportPage";
 import SchedulePage from "@/pages/SchedulePage";
-import { Home, Calendar, BarChart2, Settings, Moon, Sun, NotebookPen } from "lucide-react";
+import TabunganPage from "@/pages/TabunganPage";
+import { Home, Calendar, BarChart2, Settings, Moon, Sun, NotebookPen, Wallet } from "lucide-react";
 
 // --- KOMPONEN TOMBOL THEME ---
 const ModeToggle = () => {
@@ -62,6 +63,7 @@ const Navbar = () => {
     { path: "/calendar", icon: <Calendar size={24}/>, label: "Kalender" },
     { path: "/report", icon: <BarChart2 size={24}/>, label: "Rapor" },
     { path: "/schedule", icon: <NotebookPen size={24}/>, label: "Jadwal" },
+    { path: "/savings", icon: <Wallet size={24}/>, label: "Tabungan" },
   ];
 
   const linkClass = (path: string) => `flex flex-col items-center justify-center w-full md:w-16 md:h-16 md:rounded-md transition-all ${
@@ -136,6 +138,7 @@ function App() {
                   <Route path="/report" element={<ReportPage />} />
                   <Route path="/schedule" element={<SchedulePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/savings" element={<TabunganPage />} />
                 </Routes>
               </div>
             
