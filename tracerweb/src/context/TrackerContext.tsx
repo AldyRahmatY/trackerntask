@@ -97,21 +97,40 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   };
 
 
-  // LOGIC HABITS & TASKS
-  const [habits, setHabits] = useState<Habit[]>(() => 
-    JSON.parse(localStorage.getItem('myHabits') || '[]'));
-  
-  const [tasks, setTasks] = useState<Task[]>(() => 
-    JSON.parse(localStorage.getItem('myTasks') || '[]'));
+// 1. STATE DIKOSONGKAN TERLEBIH DAHULU
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [dailyHistory, setDailyHistory] = useState<Record<string, string[]>>({});
+  const [weeklyHistory, setWeeklyHistory] = useState<Record<string, string[]>>({});
+  const [monthlyHistory, setMonthlyHistory] = useState<Record<string, string[]>>({});
+  const [savings, setSavings] = useState<SavingGoal[]>([]);
 
-  const [dailyHistory, setDailyHistory] = useState<Record<string, string[]>>(() => 
-    JSON.parse(localStorage.getItem('dailyHistory') || '{}'));
+  // 2. STATE PENANDA LOADING
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const [weeklyHistory, setWeeklyHistory] = useState<Record<string, string[]>>(() => 
-    JSON.parse(localStorage.getItem('weeklyHistory') || '{}'));
+  // 3. LOAD DATA DARI LOCALSTORAGE SAAT COMPONENT MOUNT
+  useEffect(() => {
+    const loadData = () => {
+      const localHabits = localStorage.getItem('myHabits');
+      const localTasks = localStorage.getItem('myTasks');
+      const localDaily = localStorage.getItem('dailyHistory');
+      const localWeekly = localStorage.getItem('weeklyHistory');
+      const localMonthly = localStorage.getItem('monthlyHistory');
+      const localSavings = localStorage.getItem('mySavings');
 
-  const [monthlyHistory, setMonthlyHistory] = useState<Record<string, string[]>>(() => 
-    JSON.parse(localStorage.getItem('monthlyHistory') || '{}'));
+      if (localHabits) setHabits(JSON.parse(localHabits));
+      if (localTasks) setTasks(JSON.parse(localTasks));
+      if (localDaily) setDailyHistory(JSON.parse(localDaily));
+      if (localWeekly) setWeeklyHistory(JSON.parse(localWeekly));
+      if (localMonthly) setMonthlyHistory(JSON.parse(localMonthly));
+      if (localSavings) setSavings(JSON.parse(localSavings));
+
+      setIsDataLoaded(true); // Beri tanda bahwa semua data sudah selesai masuk
+    };
+
+    // Jeda 50 milidetik agar layar tidak blank / nge-lag di HP
+    setTimeout(loadData, 50);
+  }, []);
 
   const getPreviousDate = (daysAgo: number) => {
     const d = new Date();
@@ -146,12 +165,20 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
   // --- EFFECTS (Storage & Cleanup) ---
   useEffect(() => {
-    localStorage.setItem('myHabits', JSON.stringify(habits));
-    localStorage.setItem('myTasks', JSON.stringify(tasks));
-    localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
-    localStorage.setItem('weeklyHistory', JSON.stringify(weeklyHistory));
-    localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
-  }, [habits, tasks, dailyHistory, weeklyHistory, monthlyHistory]);
+    if (isDataLoaded) {
+      localStorage.setItem('myHabits', JSON.stringify(habits));
+      localStorage.setItem('myTasks', JSON.stringify(tasks));
+      localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
+      localStorage.setItem('weeklyHistory', JSON.stringify(weeklyHistory));
+      localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+    }
+  }, [habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      localStorage.setItem('mySavings', JSON.stringify(savings));
+    }
+  }, [savings, isDataLoaded]);
 
   // Cleanup Tugas 1x (> 12 jam)
   useEffect(() => {
@@ -279,17 +306,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // --- LOGIC TABUNGAN ---
-  const [savings, setSavings] = useState<SavingGoal[]>(() => {
-    if (typeof window !== 'undefined') {
-      const localData = localStorage.getItem('mySavings');
-      return localData ? JSON.parse(localData) : [];
-    }
-    return [];
-  });
 
-  useEffect(() => {
-    localStorage.setItem('mySavings', JSON.stringify(savings));
-  }, [savings]);
+
 
   // --- FUNGSI TABUNGAN ---
   // 1. Tambah Target Tabungan Baru
