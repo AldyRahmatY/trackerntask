@@ -8,6 +8,14 @@ export interface Habit {
   id: string;
   name: string;
   color: string;
+  timeGateStart?: string;
+  timeGateEnd?: string;
+  level: number;
+  currentXp: number;
+  maxXp: number;
+  lastClaimedDate?: string; 
+  missedDaysStreak: number;  
+  isArchived?: boolean;
 }
 
 export interface Task {
@@ -49,16 +57,20 @@ interface TrackerContextType {
   resetHour: number;
   savings: SavingGoal[];
 
+  completeHabit: (habitId: string) => void;
+  applyMissedHabitPenalties: () => void;
+  archiveHabit: (habitId: string) => void;
+
   addSavingGoal: (title: string, targetAmount: number, deadlineDate: string, frequencyType: SavingFrequency, frequencyCount: number, savingMode?: 'date' | 'amount', plannedAmount?: number) => void;
   addSavingTransaction: (goalId: string, amount: number, note: string) => void;
   deleteSavingGoal: (id: string) => void;
   editSavingGoal: (id: string, updatedGoal: Partial<SavingGoal>) => void;
   
   setResetHour: (hour: number) => void;
-  addHabit: (name: string) => void;
+  addHabit: (name: string, timeGateStart?: string, timeGateEnd?: string) => void;
   addTask: (name: string, type: TaskType, priority?: 'low' | 'medium' | 'high') => void;  
   deleteItem: (id: string, type: 'habit' | 'task') => void;
-  editHabit: (id: string, newName: string) => void;
+  editHabit: (id: string, newName: string, timeGateStart?: string, timeGateEnd?: string) => void;
   editTask: (id: string, updatedTask: Partial<Task>) => void;
 
   toggleDailyItem: (id: string) => void;
@@ -70,6 +82,7 @@ interface TrackerContextType {
   getCurrentWeekKey: () => string;
   getCurrentMonthKey: () => string;
   getHabitStreak: (id: string) => number;
+  getHabitRank: (level: number) => { title: string; color: string };
 }
 
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
@@ -97,7 +110,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   };
 
 
-// 1. STATE DIKOSONGKAN TERLEBIH DAHULU
+// Ubah menjadi seperti ini:
   const [habits, setHabits] = useState<Habit[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dailyHistory, setDailyHistory] = useState<Record<string, string[]>>({});
@@ -105,7 +118,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const [monthlyHistory, setMonthlyHistory] = useState<Record<string, string[]>>({});
   const [savings, setSavings] = useState<SavingGoal[]>([]);
 
-  // 2. STATE PENANDA LOADING
+  // Tambahkan state penanda ini:
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // 3. LOAD DATA DARI LOCALSTORAGE SAAT COMPONENT MOUNT
@@ -222,9 +235,100 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
   const getCurrentMonthKey = () => new Date().toISOString().slice(0, 7);
 
-  const addHabit = (name: string) => {
+  const addHabit = (name: string, timeGateStart?: string, timeGateEnd?: string) => {
+  const activeHabitsCount = habits.filter(h => !h.isArchived).length;
+    if (activeHabitsCount > 10) {
+      alert("Batas maksimal 10 kebiasaan aktif telah tercapai. Arsipkan kebiasaan lama untuk menambah baru!");
+      return;
+    }
+
     const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500'];
-    setHabits([...habits, { id: `h-${Date.now()}`, name, color: colors[Math.floor(Math.random() * colors.length)] }]);
+    setHabits((prev) => [
+      ...prev,
+      {
+        id: `h-${Date.now()}`,
+        name,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        timeGateStart,
+        timeGateEnd,
+        level: 1,
+        currentXp: 0,
+        maxXp: 100, // Starting Target EXP Level 1 -> 2
+        missedDaysStreak: 0,
+        isArchived: false,
+      },
+    ]);
+  };
+
+  const editHabit = (id: string, newName: string, timeGateStart?: string, timeGateEnd?: string) => {
+    setHabits(prevHabits => 
+      prevHabits.map(h => 
+        h.id === id ? { ...h, name: newName, timeGateStart, timeGateEnd } : h
+      )
+    );
+  };
+
+  const completeHabit = (habitId: string) => {
+    const todayStr = getTodayDate(); // Format YYYY-MM-DD
+
+    setHabits((prevHabits) =>
+      prevHabits.map((habit) => {
+        if (habit.id !== habitId) return habit;
+
+        // 1. Guard Anti-Cheat: Mencegah penambahan EXP jika sudah diklaim hari ini
+        if (habit.lastClaimedDate === todayStr) {
+          return habit;
+        }
+
+        // 2. Ambil nilai saat ini
+        let newXp = (habit.currentXp ?? 0) + 10; // Tambah +10 EXP
+        let newLevel = habit.level ?? 1;
+        let newMaxXp = habit.maxXp ?? 100;
+
+        // 3. Perulangan WHILE untuk menangani Level Up berantai & Multiplier 1.5x
+        while (newXp >= newMaxXp) {
+          newXp = newXp - newMaxXp;          // Kurangi EXP dengan target level saat ini
+          newLevel += 1;                       // Naikkan level +1
+          newMaxXp = Math.round(newMaxXp * 1.5); // Target level baru naik 1.5x
+        }
+
+        // 4. Simpan status terbaru beserta tanggal klaim hari ini
+        return {
+          ...habit,
+          level: newLevel,
+          currentXp: newXp,
+          maxXp: newMaxXp,
+          lastClaimedDate: todayStr,
+        };
+      })
+    );
+  };
+
+  const applyMissedHabitPenalties = () => {
+    setHabits((prevHabits) =>
+      prevHabits.map((habit) => {
+        if (habit.isArchived) return habit;
+
+        // Hitung streak hari yang terlewat (misal dihitung dari sistem reset harian)
+        const newStreak = habit.missedDaysStreak + 1;
+        const penaltyAmount = newStreak * 10; // Rumus: Total Hari Absen Beruntun x 10 EXP
+
+        // Safety Net: Minimal 0 EXP pada level berjalan (Lantai Checkpoint, Tidak Turun Level)
+        const newXp = Math.max(0, habit.currentXp - penaltyAmount);
+
+        return {
+          ...habit,
+          currentXp: newXp,
+          missedDaysStreak: newStreak,
+        };
+      })
+    );
+  };
+
+  const archiveHabit = (id: string) => {
+    setHabits((prev) =>
+      prev.map((h) => (h.id === id ? { ...h, isArchived: true } : h))
+    );
   };
 
   const addTask = (name: string, type: TaskType, priority: 'low' | 'medium' | 'high' = 'medium') => {
@@ -237,14 +341,6 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       };
       setTasks([...tasks, newTask]);
     };
-
-  const editHabit = (id: string, newName: string) => {
-    setHabits(prevHabits => 
-      prevHabits.map(h => 
-        h.id === id ? { ...h, name: newName } : h
-      )
-    );
-  };
 
   // --- FUNGSI EDIT TUGAS ---
   const editTask = (id: string, updatedTask: Partial<Task>) => {
@@ -272,14 +368,26 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-  const toggleDailyItem = (id: string) => {
-    const dateStr = getTodayDate();
-    setDailyHistory(prev => {
-      const current = prev[dateStr] || [];
-      const updated = current.includes(id) ? current.filter(i => i !== id) : [...current, id];
-      return { ...prev, [dateStr]: updated };
-    });
-  };
+const toggleDailyItem = (id: string) => {
+  const dateStr = getTodayDate();
+
+  // 1. Cek apakah ID ini milik Kebiasaan (Habit)
+  const isHabit = habits.some(h => h.id === id);
+
+  if (isHabit) {
+    // Jika Kebiasaan, panggil logika EXP & Leveling
+    completeHabit(id);
+  }
+
+  // 2. Tetap update histori harian (untuk centang UI)
+  setDailyHistory(prev => {
+    const current = prev[dateStr] || [];
+    const updated = current.includes(id) 
+      ? current.filter(i => i !== id) 
+      : [...current, id];
+    return { ...prev, [dateStr]: updated };
+  });
+};
 
   const toggleWeeklyItem = (id: string) => {
     const weekKey = getCurrentWeekKey();
@@ -376,15 +484,55 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       addHabit, addTask, deleteItem, editHabit, editTask,
       toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask,
       getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak,
-      resetHour, setResetHour, savings, addSavingGoal, addSavingTransaction, deleteSavingGoal, editSavingGoal
+      getHabitRank,
+      resetHour, setResetHour, savings, addSavingGoal, addSavingTransaction, deleteSavingGoal, editSavingGoal, completeHabit, applyMissedHabitPenalties, archiveHabit
     }}>
       {children}
     </TrackerContext.Provider>
   );
 };
 
+
+export const isWithinTimeGate = (startTime?: string, endTime?: string): { isAllowed: boolean; message: string } => {
+  // Jika tidak ada pembatasan waktu, quest bebas diklaim kapan saja
+  if (!startTime || !endTime) {
+    return { isAllowed: true, message: "Bebas klaim" };
+  }
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const [startH, startM] = startTime.split(":").map(Number);
+  const [endH, endM] = endTime.split(":").map(Number);
+
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+
+  if (currentMinutes < startMinutes) {
+    return { isAllowed: false, message: `Belum dibuka (Buka jam ${startTime})` };
+  }
+
+  if (currentMinutes > endMinutes) {
+    return { isAllowed: false, message: `Sudah kedaluwarsa (Tutup jam ${endTime})` };
+  }
+
+  return { isAllowed: true, message: `Aktif sampai ${endTime}` };
+};
+
 export const useTracker = () => {
   const context = useContext(TrackerContext);
   if (!context) throw new Error("useTracker must be used within a TrackerProvider");
   return context;
+};
+
+export const getHabitRank = (level: number = 1): { title: string; color: string } => {
+  if (level >= 30) return { title: 'Mythic', color: 'text-purple-500 bg-purple-500/10 border-purple-500/30' };
+  if (level >= 20) return { title: 'Legend', color: 'text-amber-500 bg-amber-500/10 border-amber-500/30' };
+  if (level >= 15) return { title: 'Master', color: 'text-rose-500 bg-rose-500/10 border-rose-500/30' };
+  if (level >= 10) return { title: 'Diamond', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/30' };
+  if (level >= 7)  return { title: 'Gold', color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/30' };
+  if (level >= 4)  return { title: 'Silver', color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
+  if (level >= 2)  return { title: 'Bronze', color: 'text-amber-700 bg-amber-700/10 border-amber-700/30' };
+  
+  return { title: 'Novice', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/30' };
 };

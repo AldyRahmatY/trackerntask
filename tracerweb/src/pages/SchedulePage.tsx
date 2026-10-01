@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTracker, type TaskType, type Habit, type Task } from "@/context/TrackerContext";
+import { useTracker, type TaskType, type Task } from "@/context/TrackerContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Plus, Sparkles, HelpCircle, Check, Clock, Edit2, X, NotebookPen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+const isValidTimeRange = (start: string, end: string) => start <= end;
+
 export default function SettingsPage() {
   const { habits, tasks, addHabit, addTask, deleteItem, editHabit, editTask } = useTracker();
   
+  const [timeGateStart, setTimeGateStart] = useState("");
+  const [timeGateEnd, setTimeGateEnd] = useState("");
   const [taskType, setTaskType] = useState<TaskType>('Harian');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newItem, setNewItem] = useState("");
@@ -21,6 +25,8 @@ export default function SettingsPage() {
 
   // ✨ STATE UNTUK EDIT KEBIASAAN
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [editTimeStart, setEditTimeStart] = useState("");
+  const [editTimeEnd, setEditTimeEnd] = useState("");
   const [editHabitName, setEditHabitName] = useState("");
 
   // ✨ STATE UNTUK EDIT TUGAS
@@ -29,30 +35,51 @@ export default function SettingsPage() {
   const [editTaskTypeObj, setEditTaskTypeObj] = useState<TaskType>('Harian');
   const [editTaskPriority, setEditTaskPriority] = useState<'low'|'medium'|'high'>('medium');
 
-  // --- FUNGSI UTAMA ---
-  const handleAdd = () => {
-    if (!newItem.trim()) return;
-    if (activeTab === 'habit') {
-      addHabit(newItem);
-    } else {
-      addTask(newItem, taskType, priority);
+
+
+
+  // Di fungsi handleAdd():
+const handleAdd = () => {
+  if (!newItem.trim()) return;
+
+  if (activeTab === 'habit') {
+    // Check validasi waktu
+    if (timeGateStart && timeGateEnd && !isValidTimeRange(timeGateStart, timeGateEnd)) {
+      alert("Jam Tutup tidak boleh lebih awal dari Jam Buka!");
+      return;
     }
-    setNewItem("");
-  };
+
+    addHabit(newItem, timeGateStart || undefined, timeGateEnd || undefined);
+    setTimeGateStart("");
+    setTimeGateEnd("");
+  } else {
+    addTask(newItem, taskType, priority);
+  }
+
+  setNewItem("");
+};
 
   const handleAiGenerate = async () => {
     setAiSuggestions(["Minum Air 2L", "Olahraga 30 Menit", "Maksimal Screen Time 2 Jam"]);
   };
 
   // --- ✨ FUNGSI EDIT KEBIASAAN ---
-  const startEditHabit = (habit: Habit) => {
+  const startEditHabit = (habit: any) => {
     setEditingHabitId(habit.id);
     setEditHabitName(habit.name);
+    setEditTimeStart(habit.timeGateStart || "");
+    setEditTimeEnd(habit.timeGateEnd || "");
   };
 
   const saveEditHabit = () => {
     if (editingHabitId && editHabitName.trim()) {
-      editHabit(editingHabitId, editHabitName);
+      // Check validasi waktu edit
+      if (editTimeStart && editTimeEnd && !isValidTimeRange(editTimeStart, editTimeEnd)) {
+        alert("Jam Tutup tidak boleh lebih awal dari Jam Buka!");
+        return;
+      }
+
+      editHabit(editingHabitId, editHabitName, editTimeStart || undefined, editTimeEnd || undefined);
       setEditingHabitId(null);
     }
   };
@@ -197,8 +224,35 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <Button onClick={handleAdd} className="w-full gap-2 font-bold"><Plus size={16}/> Tambah</Button>
-        </div>
+
+        {/* 2. TARUH DI SINI (Tepat di bawah Form Utama) */}
+        {activeTab === 'habit' && (
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">Jam Buka</label>
+              <Input 
+                type="time" 
+                value={timeGateStart} 
+                onChange={(e) => setTimeGateStart(e.target.value)} 
+                onClick={(e) => e.currentTarget.showPicker()}
+                className="h-9 text-xs bg-background cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">Jam Tutup</label>
+                <Input 
+                  type="time" 
+                  value={timeGateEnd} 
+                  min={timeGateStart} // Batasi agar tidak bisa memilih jam sebelum Jam Buka
+                  onChange={(e) => setTimeGateEnd(e.target.value)} 
+                  onClick={(e) => e.currentTarget.showPicker()}
+                  className="h-9 text-xs bg-background cursor-pointer"
+                />
+            </div>
+          </div>
+        )}
+        <Button onClick={handleAdd} className="w-full gap-2 font-bold"><Plus size={16}/> Tambah</Button>
+      </div>
 
         {/* LIST CONTENT: KEBIASAAN */}
         <TabsContent value="habit" className="space-y-3 mt-4">
@@ -206,23 +260,73 @@ export default function SettingsPage() {
           {habits.map(h => {
             // ✨ FORM JIKA MODE EDIT KEBIASAAN AKTIF
             if (editingHabitId === h.id) {
-              return (
-                <div key={h.id} className="flex gap-2 items-center bg-card p-3 rounded-xl border border-emerald-500 shadow-sm ring-2 ring-emerald-500/20">
-                  <Input value={editHabitName} onChange={(e) => setEditHabitName(e.target.value)} className="h-8 text-sm bg-background" autoFocus />
-                  <Button variant="ghost" size="icon" onClick={() => setEditingHabitId(null)} className="h-8 w-8 text-slate-500 hover:text-rose-500 hover:bg-rose-50"><X size={16}/></Button>
-                  <Button variant="ghost" size="icon" onClick={saveEditHabit} className="h-8 w-8 text-emerald-600 bg-emerald-50 hover:bg-emerald-100"><Check size={16}/></Button>
-                </div>
-              );
+
             }
 
-            // TAMPILAN KEBIASAAN NORMAL
+            // TAMPILAN KEBIASAAN
             return (
-              <div key={h.id} className="flex justify-between items-center bg-card p-3 rounded-xl border shadow-sm group">
-                <span className="text-sm font-medium">{h.name}</span>
-                <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" onClick={() => startEditHabit(h)} className="h-8 w-8 text-slate-400 hover:text-blue-500"><Edit2 size={16}/></Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteItem(h.id, 'habit')} className="h-8 w-8 text-slate-400 hover:text-red-500"><Trash2 size={16}/></Button>
-                </div>
+              <div key={h.id} className="p-3 rounded-lg border bg-card flex flex-col gap-2">
+                {editingHabitId === h.id ? (
+                  /* === JIKA SEDANG DIEDIT === */
+                  <div className="flex flex-col gap-2">
+                    <Input
+                      value={editHabitName}
+                      onChange={(e) => setEditHabitName(e.target.value)}
+                      placeholder="Nama kebiasaan..."
+                    />
+                    
+                    {/* Form Input Jam 1 Baris */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="time"
+                        value={editTimeStart}
+                        onChange={(e) => setEditTimeStart(e.target.value)}
+                        onClick={(e) => e.currentTarget.showPicker()}
+                        className="h-8 text-xs cursor-pointer"
+                      />
+                      <Input
+                        type="time"
+                        value={editTimeEnd}
+                        onChange={(e) => setEditTimeEnd(e.target.value)}
+                        onClick={(e) => e.currentTarget.showPicker()}
+                        className="h-8 text-xs cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-1">
+                      <Button size="sm" variant="outline" onClick={() => setEditingHabitId(null)}>Batal</Button>
+                      <Button size="sm" onClick={saveEditHabit}>Simpan</Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* === TAMPILAN NORMAL (INFORMATIF) === */
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium text-sm">{h.name}</span>
+                      
+                      {/* Badge Informasi Jam */}
+                      {(h.timeGateStart || h.timeGateEnd) ? (
+                        <span className="text-[11px] text-muted-foreground flex items-center">
+                          {h.timeGateStart || "00:00"} - {h.timeGateEnd || "23:59"}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">
+                          Bebas 24 Jam
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tombol Aksi */}
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => startEditHabit(h)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteItem(h.id, 'habit')}>
+                        Hapus
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

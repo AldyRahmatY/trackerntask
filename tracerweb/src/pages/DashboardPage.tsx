@@ -1,65 +1,61 @@
 import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
-// import { Progress } from "@/components/ui/progress";
-// import { Badge } from "@/components/ui/badge";
-import { Check, 
-  // Sparkles, 
-  Clock, CalendarDays, Zap, Flame, ArrowUp, Minus, ArrowDown } from "lucide-react";
-import { useEffect, 
-  // useState
-        } from "react";
-import confetti from "canvas-confetti";
+import { isWithinTimeGate } from "@/context/TrackerContext";
+import { Check, Clock, CalendarDays, Flame, ArrowUp, Minus, ArrowDown, Trophy } from "lucide-react";
 
 
 export default function DashboardPage() {
-  const { habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask, getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak } = useTracker();
+  const { habits, tasks, dailyHistory, weeklyHistory, monthlyHistory, toggleDailyItem, toggleWeeklyItem, toggleMonthlyItem, toggleOneTimeTask, getTodayDate, getCurrentWeekKey, getCurrentMonthKey, getHabitStreak, getHabitRank } = useTracker();
   
   const today = getTodayDate();
 
   const currentWeek = getCurrentWeekKey();
-  
+
   const rawCompleted = dailyHistory[today] || [];
 
   // 2. Ambil semua ID habit yang MASIH AKTIF (belum dihapus)
   const activeHabitIds = habits.map(h => h.id);
-
+  const activeHabits = habits.filter((h) => !h.isArchived);
+  
   // 3. Filter history: Hanya hitung jika ID-nya ada di daftar activeHabitIds
   const validCompletedHabits = rawCompleted.filter(id => 
     activeHabitIds.includes(id) && id.startsWith('h-')
   );
 
   // 4. Hitung progress baru
-  const progress = habits.length > 0 
-    ? Math.round((validCompletedHabits.length / habits.length) * 100) 
-    : 0;
-// --- EFEK CONFETTI ---
-  useEffect(() => {
-    if ((progress === 50 || progress === 100) && habits.length > 0) {
-      // Tembakkan confetti
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+//   const progress = activeHabits.length > 0 
+//     ? Math.round((validCompletedHabits.length / activeHabits.length) * 100) 
+//     : 0;
 
-      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+// // --- EFEK CONFETTI ---
+//   useEffect(() => {
+//     if ((progress === 50 || progress === 100) && habits.length > 0) {
+//       // Tembakkan confetti
+//       const duration = 3 * 1000;
+//       const animationEnd = Date.now() + duration;
+//       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-      const interval: any = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
+//       const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
+//       const interval: any = setInterval(function() {
+//         const timeLeft = animationEnd - Date.now();
 
-        const particleCount = 50 * (timeLeft / duration);
+//         if (timeLeft <= 0) {
+//           return clearInterval(interval);
+//         }
+
+//         const particleCount = 50 * (timeLeft / duration);
         
-        // Confetti dari kiri dan kanan layar
-        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-      }, 250);
-    }
-  }, [progress, habits.length]);
+//         // Confetti dari kiri dan kanan layar
+//         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+//         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+//       }, 250);
+//     }
+//   }, [progress, habits.length]);
 
   const currentMonth = getCurrentMonthKey();
   // const [motivation, setMotivation] = useState("");
+
 
   // Logic Progress
   const completedHabits = dailyHistory[today] || [];
@@ -83,21 +79,32 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mx-auto p-4 md:p-6 lg:p-8">      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hari Ini</h1>
-          <p className="text-muted-foreground">
-             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        </div>
-        
+    // <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mx-auto p-4 md:p-6 lg:p-8">      
+    //   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    //     <div>
+    //       <h1 className="text-2xl font-bold tracking-tight">Hari Ini</h1>
+    //       <p className="text-muted-foreground">
+    //          {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+    //       </p>
+    //     </div>
+    //   </div>
 
-        <div className="w-full md:w-64">
-           {/* ... Kode Progress Bar & Grade ... */}
-           {/* Masukkan kode progress bar lingkaran/text grade disini */}
+    <div className="p-4 max-w-md mx-auto space-y-6 pb-20">
+      {/* Header Level Global / Ringkasan Singkat */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between">
+        <div>
+          <p className="text-md uppercase font-bold">Status Kebiasaan Aktif</p>
+          <h2 className="text-sm font-medium flex items-center gap-2 mt-1">
+            {activeHabits.length} / 10 Slot Digunakan
+          </h2>
+        </div>
+        <div className="text-right">
+          <span className="text-xs bg-white/20 px-2 py-1 rounded-full font-mono">
+            +10 EXP / Selesai
+          </span>
         </div>
       </div>
+      
 
       {/* AI Card */}
       {/* <Card className="dark:bg-teal-800/60 bg-teal-600/80 text-white border-none">
@@ -111,21 +118,19 @@ export default function DashboardPage() {
       </Card> */}
 
       {/* Kebiasaan */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <Zap className="text-yellow-500 fill-yellow-500" size={20}/> Kebiasaan
+              <h3 className="text-lg flex items-center gap-2">
+                Kebiasaan
               </h3>
-              <span className="text-sm font-semibold text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {validCompletedHabits.length}/{habits.length} Selesai
               </span>
             </div>
 
       {/* --- CUSTOM PROGRESS BAR --- */}
-        <div className="relative w-full">
-          
-          {/* Label Motivasi (Berubah sesuai progress) */}
+        {/* <div className="relative w-full">
           <div className="flex justify-between text-xs font-bold mb-1.5 uppercase tracking-wide">
             <span className={`${progress === 100 ? 'text-emerald-600' : 'text-slate-500'}`}>
               {progress === 0 ? "Ayo Mulai!" : 
@@ -135,9 +140,7 @@ export default function DashboardPage() {
             <span className="text-primary">{progress}%</span>
           </div>
 
-          {/* Batang Progress (Background) */}
           <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
-            {/* Batang Progress (Isi / Fill) */}
             <div 
               className={`h-full transition-all duration-1000 ease-out flex items-center justify-end pr-1 shadow-md
                 ${progress === 100 
@@ -147,70 +150,124 @@ export default function DashboardPage() {
               `}
               style={{ width: `${progress}%` }}
             >
-              {/* Efek Kilau/Shine (Garis putih tipis miring) */}
               {progress > 0 && (
                 <div className="w-full h-full opacity-20 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.5)_50%,transparent_75%)] bg-[length:250%_250%] animate-shimmer"></div>
               )}
             </div>
           </div>
-        </div>
+        </div> */}
         {/* --- END CUSTOM PROGRESS BAR --- */}
           
           {/* <Progress value={progress} className="h-2" /> */}
+
           {habits.map(h => {
             const isDone = completedHabits.includes(h.id);
-            // Panggil fungsi logic streak disini
             const streak = getHabitStreak(h.id); 
+            const { isAllowed, message } = isWithinTimeGate(h.timeGateStart, h.timeGateEnd);
+            const isLocked = !isAllowed;
+            const rank = getHabitRank(h.level ?? 1);
+
             return (
               <div 
                 key={h.id} 
-                onClick={() => toggleDailyItem(h.id)} 
-                className={`relative flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all duration-200 group
-                  ${isDone 
-                    ? 'bg-muted/50 border-muted opacity-80' // Style saat selesai
-                    : 'bg-card border-border hover:border-primary hover:shadow-md' // Style saat belum
+                onClick={() => {
+                  // Mencegah klik APAPUN jika waktu sudah habis (isLocked = true)
+                  if (!isLocked) toggleDailyItem(h.id);
+                }} 
+                className={`relative flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group
+                  ${isLocked 
+                    ? 'bg-slate-100/60 border-slate-200 opacity-60 cursor-not-allowed' // Tampilan jika Waktu Habis (Terkunci)
+                    : isDone 
+                      ? 'bg-muted/50 border-muted opacity-80 cursor-pointer' // Tampilan Selesai & Masih Ada Waktu
+                      : 'bg-card border-border hover:border-primary hover:shadow-md cursor-pointer' // Tampilan Belum Selesai & Masih Ada Waktu
                   }`}
               >
-                
-                {/* BAGIAN KIRI: Warna & Teks */}
-                <div className="flex items-center gap-4">
-                  {/* Indikator Warna (Garis Tegak) */}
-                  <div className={`w-1.5 h-10 rounded-full ${h.color}`}></div>
-                  
-                  <div className="flex flex-col">
-                    {/* Nama Kebiasaan */}
-                    <span className={`font-semibold text-base tracking-wide ${isDone ? 'line-through text-muted-foreground' : ''}`}>
-                      {h.name}
-                    </span>
-
-                    {/* --- POSISI STREAK (DI DALAM KOTAK, BAWAH NAMA) --- */}
-                    {streak > 0 ? (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
-                          <Flame size={12} className="fill-orange-500 animate-pulse" /> 
-                          {streak} Hari Beruntun
+                <div className="flex items-center justify-between w-full">
+                  {/* BAGIAN KIRI: Info Utama Kebiasaan */}
+                  <div className="flex items-center gap-4 flex-1 pr-3">
+                    <div className="flex flex-col w-full">
+                      {/* Baris 1: Nama Kebiasaan + Badge Level */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-base tracking-wide ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                          {h.name}
+                        </span>
+                        
+                        {/* Badge Level / Rank */}
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${rank.color}`}>
+                          {rank.title}
                         </span>
                       </div>
-                    ) : (
-                      // (Opsional) Teks penyemangat jika streak 0
-                      <span className="text-[10px] text-muted-foreground mt-0.5">
-                        Mulai streak barumu hari ini!
-                      </span>
-                    )}
+
+                      {/* Baris 2: Sub-info (Time Gate, Streak, & Peringatan Penalti) */}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {/* Status Jendela Waktu */}
+                        {(h.timeGateStart && h.timeGateEnd) && (
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                            isAllowed 
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                              : 'bg-amber-50 text-amber-600 border-amber-200'
+                          }`}>
+                            {isAllowed ? '🔓' : '🔒'} {message}
+                          </span>
+                        )}
+
+                        {/* Indikator Streak */}
+                        {streak > 0 ? (
+                          <span className="flex items-center gap-1 text-xs font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
+                            <Flame size={12} className="fill-orange-500 animate-pulse" /> 
+                            {streak} Hari Beruntun
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">
+                            Mulai streak barumu hari ini!
+                          </span>
+                        )}
+
+                        {/* Indikator Penalti Beruntun */}
+                        {(h.missedDaysStreak ?? 0) > 0 && !isDone && (
+                          <span className="text-[10px] font-medium text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                            ⚠ Potensi Penalti: -{(h.missedDaysStreak ?? 0) * 10} EXP
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Baris 3: Progress Bar EXP Mini */}
+                      <div className="mt-2 w-full max-w-[200px] space-y-0.5">
+                        <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
+                          <span>{h.currentXp ?? 0} / {h.maxXp ?? 100} EXP</span>
+                          <span>{Math.min(100, Math.round(((h.currentXp ?? 0) / (h.maxXp ?? 100)) * 100))}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 transition-all duration-300"
+                            style={{ 
+                              width: `${Math.min(100, Math.round(((h.currentXp ?? 0) / (h.maxXp ?? 100)) * 100))}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* BAGIAN KANAN: Tombol Status Check-in */}
+                  <div className={`
+                    w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all flex-shrink-0
+                    ${isDone 
+                      ? isLocked
+                        ? 'bg-green-600/50 border-green-600/50' // Terkunci & Sudah Selesai (Centang Redup)
+                        : 'bg-green-500 border-green-500 scale-110' // Masih Buka & Sudah Selesai (Bisa di-uncheck)
+                      : isLocked
+                        ? 'bg-slate-200 border-slate-300' // Terkunci & Belum Selesai (Gembok)
+                        : 'border-muted-foreground/20 group-hover:border-primary/50' // Masih Buka & Belum Selesai
+                    }
+                  `}>
+                    {/* Tampilkan centang jika sudah selesai */}
+                    {isDone && <Check size={16} className="text-white font-bold" strokeWidth={4} />}
+                    
+                    {/* Tampilkan gembok HANYA jika waktu habis DAN belum selesai */}
+                    {isLocked && !isDone && <span className="text-xs">🔒</span>}
                   </div>
                 </div>
-
-                {/* BAGIAN KANAN: Checkmark */}
-                <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
-                  ${isDone 
-                    ? 'bg-green-500 border-green-500 scale-110' 
-                    : 'border-muted-foreground/20 group-hover:border-primary/50'
-                  }
-                `}>
-                  {isDone && <Check size={16} className="text-white font-bold" strokeWidth={4} />}
-                </div>
-
               </div>
             );
           })}
@@ -220,7 +277,7 @@ export default function DashboardPage() {
         {/* Tugas */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg flex items-center gap-2">🕒 Tugas</h3>
+            <h3 className="font-medium text-lg flex items-center gap-2">Tugas</h3>
             
             {/* Info Chip Kecil */}
             <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-medium">
@@ -231,7 +288,6 @@ export default function DashboardPage() {
           {sortedTasks.map(t => {
             let isDone = false;
             let toggleFn = () => {};
-            let Icon = Clock;
             
             if (t.type === 'Harian') {
               isDone = (dailyHistory[today] || []).includes(t.id);
@@ -242,11 +298,9 @@ export default function DashboardPage() {
             } else if (t.type === 'Bulanan') {
               isDone = (monthlyHistory[currentMonth] || []).includes(t.id);
               toggleFn = () => toggleMonthlyItem(t.id);
-              Icon = CalendarDays;
             } else if (t.type === 'Sekali Waktu') {
               isDone = !!t.completedAt;
               toggleFn = () => toggleOneTimeTask(t.id);
-              Icon = Check;
             }
 
           const priorityStyles = {
@@ -266,7 +320,6 @@ export default function DashboardPage() {
                     
                     {/* Icon Tipe Tugas (Harian/Mingguan) */}
                     <div className={`p-2 rounded-lg ${isDone ? 'bg-slate-100 text-slate-400' : 'bg-primary/5 text-primary'}`}>
-                      <Icon size={18}/>
                     </div>
 
                     <div>
@@ -277,7 +330,7 @@ export default function DashboardPage() {
                         
                         {/* BADGE PRIORITAS */}
                         {!isDone && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-bold uppercase ${style.bg} ${style.text}`}>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 uppercase ${style.bg} ${style.text}`}>
                             <PriorityIcon size={10} strokeWidth={3} /> 
                             {t.priority === 'high' ? 'Prioritas Tinggi' : t.priority === 'low' ? 'Santai': 'Segera'}
                           </span>

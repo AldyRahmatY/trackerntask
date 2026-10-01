@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { useTracker } from "@/context/TrackerContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Trophy, CalendarDays, Target, TrendingUp, AlertCircle, Award, BarChart2 } from "lucide-react"; // Icon baru
-import { LineChart, Line, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Calendar, 
+  Award, 
+  BarChart3, 
+  ThumbsUp, 
+  AlertCircle, 
+  Star,
+  Target,
+  Sparkles
+} from 'lucide-react';
 
 export default function ReportPage() {
   const { habits, dailyHistory } = useTracker();
@@ -39,8 +46,18 @@ export default function ReportPage() {
     // Skip masa depan
     if (new Date(dateStr) > new Date()) continue;
 
-    const dayItems = dailyHistory[dateStr] || [];
-    const completedHabitsOnDay = dayItems.filter(id => habitIds.includes(id));
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // 2. Di dalam loop:
+    if (year === today.getFullYear() && month === today.getMonth() && dateStr > todayStr) {
+      continue;
+    }
+
+    // Pakai Set() agar ID habit unik (maksimal 1x per hari)
+    const rawDayItems = dailyHistory[dateStr] || [];
+    const completedHabitsOnDay = Array.from(new Set(rawDayItems)).filter(id => habitIds.includes(id));
 
     if (habits.length > 0) {
       totalPossibleHabits += habits.length;
@@ -92,169 +109,249 @@ export default function ReportPage() {
   const prevMonth = () => setSelectedMonth(new Date(year, month - 1, 1));
   const nextMonth = () => setSelectedMonth(new Date(year, month + 1, 1));
 
+  const monthLabel = selectedMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mx-auto p-4 md:p-6 lg:p-8">      
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+      
+      {/* 1. HEADER & NAVIGASI BULAN */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
         <div>
-          <h1 className="text-2xl font-bold">
-            <BarChart2 size={24} className="inline-block mr-2 text-emerald-500"/>
-            Rapor</h1>
-          <p className="text-muted-foreground">Analisa performa bulanan.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Laporan & Analisis</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Evaluasi performa dan tingkat konsistensi kebiasaanmu.
+          </p>
         </div>
-        <div className="flex items-center gap-1 bg-card border p-1 rounded-lg shadow-sm">
-          <Button variant="ghost" size="icon" onClick={prevMonth} className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
-          <span className="font-semibold text-sm w-24 text-center capitalize">
-            {selectedMonth.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-          </span>
-          <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
-        </div>
-      </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* 1. KOLOM KIRI: RAPOR (1 Baris Penuh - Full Height) */}
-      <Card className="relative overflow-hidden h-full flex flex-col justify-center shadow-md border-0">
-        <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${gradientBar}`}></div>
-        <CardContent className="pt-8 pb-8 text-center flex flex-col items-center justify-center flex-grow">
-          <span className="text-s font-bold uppercase tracking-wider text-muted-foreground mb-4">Nilai Keseluruhan</span>
-          <div className={`text-9xl font-black ${gradeColor} drop-shadow-sm leading-none`}>
-            {grade}
+
+        {/* Control Pindah Bulan */}
+        <div className="flex items-center gap-2 bg-card border px-2 py-1 rounded-lg shadow-sm">
+          <button 
+            onClick={prevMonth}
+            className="p-1 hover:bg-muted rounded-md transition-colors"
+            title="Bulan Sebelumnya"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="flex items-center gap-1.5 px-2 text-sm font-semibold min-w-[130px] justify-center">
+            <Calendar size={14} className="text-muted-foreground" />
+            <span>{monthLabel}</span>
           </div>
-          <div className="text-3xl font-bold mt-4">{percentage}%</div>
-          <p className="text-muted-foreground italic mt-2">"{message}"</p>
-        </CardContent>
-      </Card>
-
-      {/* 2. KOLOM KANAN: STATISTIK (2 Baris Ditumpuk) */}
-      <div className="flex flex-col gap-4 h-full">
-        
-        {/* Baris 1: Paling Rajin */}
-        <Card className="flex-1 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 flex flex-col justify-center shadow-sm">
-          <CardContent className="p-6 flex items-center gap-5">
-              <div className="shrink-0 bg-emerald-200 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-300 shadow-sm">
-                <Award size={24} />
-              </div>
-              <div className="text-left flex-1 min-w-0">
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider">Paling Rajin</span>
-                <p className="font-bold text-lg truncate text-emerald-950 dark:text-emerald-100 mt-1">
-                    {bestHabit ? bestHabit.name : "-"}
-                </p>
-              </div>
-          </CardContent>
-        </Card>
-
-        {/* Baris 2: Jarang Dilakukan */}
-        <Card className="flex-1 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800 flex flex-col justify-center shadow-sm">
-          <CardContent className="p-6 flex items-center gap-5">
-              <div className="shrink-0 bg-rose-200 dark:bg-rose-800 w-12 h-12 rounded-full flex items-center justify-center text-rose-700 dark:text-rose-300 shadow-sm">
-                <AlertCircle size={24} />
-              </div>
-              <div className="text-left flex-1 min-w-0">
-                <span className="text-xs text-rose-600 dark:text-rose-400 font-extrabold uppercase tracking-wider">Jarang Disentuh</span>
-                <p className="font-bold text-lg truncate text-rose-950 dark:text-rose-100 mt-1">
-                    {worstHabit ? worstHabit.name : "-"}
-                </p>
-              </div>
-          </CardContent>
-        </Card>
-
+          <button 
+            onClick={nextMonth}
+            className="p-1 hover:bg-muted rounded-md transition-colors"
+            title="Bulan Berikutnya"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
-    </div>
 
-
-      {/* ✨ FITUR BARU: GRAFIK TREN */}
-      <Card>
-        <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold flex items-center gap-2 tracking-wide">
-              <TrendingUp size={18} className="text-primary"/> Tren Mingguan
-            </CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className="h-[180px] w-full mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6"/>
-                    <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fontSize: 12, fill: '#9ca3af'}} 
-                        dy={10}
-                        interval={0} 
-                      padding={{ left: 20, right: 20 }}
-                    />
-                    <RechartsTooltip 
-                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
-                        labelStyle={{fontWeight: 'bold', color: '#374151'}}
-                    />
-                    <Line 
-                        type="monotone" 
-                        dataKey="score" 
-                        stroke="#0d9488" // Warna Teal
-                        strokeWidth={3} 
-                        dot={{r: 4, fill: '#0d9488', strokeWidth: 2, stroke: '#fff'}} 
-                        activeDot={{r: 6}}
-                    />
-                  </LineChart>
-              </ResponsiveContainer>
-            </div>
-        </CardContent>
-      </Card>
-
-    <Card className="shadow-md border-0">
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2 tracking-wide">
-          <CalendarDays size={18} className="text-primary"/> Detail Progress
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {habits.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Belum ada kebiasaan.</p>}
+      {/* 2. SUMMARY & GRADE HERO CARD */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {habits.map(habit => {
-          const count = habitCounts[habit.id] || 0;
-          const passedDays = daysInMonth; 
-          const habitPercent = passedDays > 0 ? Math.round((count / passedDays) * 100) : 0;
+        {/* HERO CARD: Grade & Progress Utama */}
+        <div className="lg:col-span-2 bg-card border rounded-xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">
+                Performa Bulan Ini
+              </span>
+              <h2 className="text-lg font-semibold mt-1">{message}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Kamu telah menyelesaikan <span className="text-foreground">{totalCompleted}</span> dari <span className=" text-foreground">{totalPossibleHabits}</span> target kebiasaan.
+              </p>
+            </div>
 
-          return (
-            <div key={habit.id} className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${habit.color} shadow-sm ring-1 ring-offset-1 ring-slate-200`}></div>
-                  {habit.name}
+            {/* Badge Grade */}
+            <div className="flex flex-col items-center justify-center bg-muted/50 border px-5 py-3 rounded-xl min-w-[80px]">
+              <span className="text-xs font-medium text-muted-foreground">Grade</span>
+              <span className={`text-4xl font-black ${gradeColor}`}>{grade}</span>
+            </div>
+          </div>
+
+          {/* Progress Bar Visual */}
+          <div className="mt-6 space-y-2">
+            <div className="flex justify-between text-xs font-light text-muted-foreground">
+              <span className="flex items-center gap-1">Progressmu</span>
+              <span>{percentage}%</span>
+            </div>
+            <div className="w-full h-3 bg-muted rounded-full overflow-hidden p-0.5 border">
+              <div 
+                className={`h-full rounded-full bg-gradient-to-r ${gradientBar} transition-all duration-500`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* METRIK TAMBAHAN */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+          {/* Perfect Days */}
+          <div className="bg-card border rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">Hari Sempurna (100%)</p>
+              <p className="text-2xl font-normal mt-1">{perfectDays} <span className="text-sm font-normal text-muted-foreground">Hari</span></p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Semua habit selesai dalam sehari</p>
+            </div>
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-xl">
+              <Award size={24} />
+            </div>
+          </div>
+
+          {/* Total Kebiasaan Aktif */}
+          <div className="bg-card border rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">Kebiasaan Dipantau</p>
+              <p className="text-2xl font-normal mt-1">{habits.length} <span className="text-sm font-normal text-muted-foreground">Habit</span></p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Aktif di periode bulan ini</p>
+            </div>
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-600 rounded-xl">
+              <Target size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. GRAFIK MINGGUAN & HIGHLIGHT (BEST/WORST) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* GRAFIK MINGGUAN */}
+        <div className="lg:col-span-2 bg-card border rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 size={18} className="text-primary" />
+              <h3 className="font-normal text-base">Konsistensi Per Minggu</h3>
+            </div>
+            <span className="text-xs text-muted-foreground">Persentase Sukses</span>
+          </div>
+
+          {/* Visual Custom Bar Chart */}
+          <div className="pt-4 pb-2 grid grid-cols-4 gap-3 items-end h-48 border-b">
+            {chartData.map((item, index) => (
+              <div key={index} className="flex flex-col items-center gap-2 h-full justify-end group">
+                <span className="text-xs font-normal-muted-foreground opacity-80 group-hover:opacity-100 transition-opacity">
+                  {item.score}%
                 </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
-                      {count} Kali
-                    </span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300 w-8 text-right">
-                      {habitPercent}%
-                    </span>
+                <div className="w-full max-w-[48px] bg-muted rounded-t-md h-full flex items-end overflow-hidden p-1">
+                  <div 
+                    className="w-full bg-primary/80 group-hover:bg-primary transition-all duration-300 rounded-t-sm"
+                    style={{ height: `${item.score}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* HIGHLIGHT HABIT (BEST & WORST) */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+          <h3 className="text-base flex items-center gap-2">
+            <Star size={18} className="text-amber-500" />
+            Sorotan Kebiasaan
+          </h3>
+
+          <div className="space-y-3">
+            {/* Best Habit */}
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+              <div className="flex items-center gap-1.5 text-xs font-semi-bold text-emerald-700 dark:text-emerald-400">
+                <ThumbsUp size={14} /> Paling Konsisten
+              </div>
+              {bestHabit ? (
+                <div className="mt-1">
+                  <p className="text-sm text-foreground">{bestHabit.name || bestHabit.name || 'Kebiasaan'}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    Selesai <span className="text-decoration: underline">{bestHabit.count} kali</span> bulan ini
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">Belum ada data</p>
+              )}
+            </div>
+
+            {/* Worst Habit */}
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                <AlertCircle size={14} /> Perlu Ditingkatkan
+              </div>
+              {worstHabit ? (
+                <div className="mt-1">
+                  <p className="text-sm text-foreground">{worstHabit.name || worstHabit.name || 'Kebiasaan'}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                    Baru selesai <span className="text-decoration: underline">{worstHabit.count} kali</span> bulan ini
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">Belum ada data</p>
+              )}
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground text-center tracking-loose font-light mt-2">
+            "Fokus tingkatkan kebiasaan yang masih rendah di bulan berikutnya!"
+          </p>
+        </div>
+      </div>
+
+      {/* 4. DETAIL PERFORMA SETIAP HABIT */}
+      <div className="bg-card border rounded-xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-base">Rincian Performa per Kebiasaan</h3>
+          <span className="text-xs text-muted-foreground">Diurutkan dari yang tersering</span>
+        </div>
+
+        {sortedHabits.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Belum ada kebiasaan yang ditambahkan.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sortedHabits.map((item) => {
+              // Hitung persentase habit terhadap total hari berjalannya bulan ini
+              const itemPercentage = daysInMonth > 0 ? Math.round((item.count / daysInMonth) * 100) : 0;
+
+              return (
+                <div 
+                  key={item.id} 
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg gap-3 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{item.name || item.name}</span>
+                      {item.level && (
+                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-medium text-muted-foreground">
+                          Level {item.level}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress Bar Kebiasaan */}
+                    <div className="w-full max-w-md h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${Math.min(itemPercentage, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Statistik Angka */}
+                  <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
+                    <div className="text-right">
+                      <div className="font-bold text-foreground">{item.count} Hari</div>
+                      <div className="text-[10px]">Total Selesai</div>
+                    </div>
+                    <div className="text-right border-l pl-4">
+                      <div className="font-bold text-primary">{itemPercentage}%</div>
+                      <div className="text-[10px]">Konsistensi</div>
+                    </div>
                   </div>
                 </div>
-              <Progress value={habitPercent} className="h-3 bg-secondary rounded-full" />
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-
-      {/* GRID STATISTIK KECIL (SAMA SEPERTI SEBELUMNYA) */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center">
-            <Target className="text-indigo-500 mb-2" size={24} />
-            <div className="text-2xl font-bold">{totalCompleted}</div>
-            <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Total Selesai</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center text-center">
-            <Trophy className="text-yellow-500 mb-2" size={24} />
-            <div className="text-2xl font-bold">{perfectDays}</div>
-            <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Hari Sempurna</span>
-          </CardContent>
-        </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
+
     </div>
   );
-  }
+}
