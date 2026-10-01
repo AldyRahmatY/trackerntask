@@ -9,8 +9,7 @@ import {
   ThumbsUp, 
   AlertCircle, 
   Star,
-  Target,
-  Sparkles
+  Target
 } from 'lucide-react';
 
 export default function ReportPage() {

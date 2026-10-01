@@ -1,7 +1,7 @@
 import { useTracker } from "@/context/TrackerContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { isWithinTimeGate } from "@/context/TrackerContext";
-import { Check, Clock, CalendarDays, Flame, ArrowUp, Minus, ArrowDown, Trophy } from "lucide-react";
+import { Check, Flame, ArrowUp, Minus, ArrowDown } from "lucide-react";
 
 
 export default function DashboardPage() {
